@@ -1,0 +1,3468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drone Education Hub — Plenty Valley Christian College</title>
+<meta name="description" content="Interactive drone education platform: safety, block coding, Python programming, and flight simulation.">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=JetBrains+Mono:wght@300;400;500;600&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ── colour system ── */
+    --bg-deep:     #050a14;
+    --bg-panel:    #080f1e;
+    --bg-card:     #0b1425;
+    --bg-card-2:   #0e1a2e;
+    --cyan:        #00e5ff;
+    --cyan-dim:    #00b8d4;
+    --purple:      #c653ff;
+    --purple-dim:  #9c27b0;
+    --amber:       #ffab00;
+    --green:       #00e676;
+    --red:         #ff1744;
+    --text-main:   #ccd6f6;
+    --text-muted:  #7b8cb0;
+    --border:      rgba(0,229,255,0.18);
+    --glow-cyan:   0 0 18px rgba(0,229,255,0.45), 0 0 40px rgba(0,229,255,0.15);
+    --glow-purple: 0 0 18px rgba(198,83,255,0.45), 0 0 40px rgba(198,83,255,0.15);
+    --glow-amber:  0 0 18px rgba(255,171,0,0.45),  0 0 40px rgba(255,171,0,0.15);
+    --glow-green:  0 0 18px rgba(0,230,118,0.45),  0 0 40px rgba(0,230,118,0.15);
+    --fs: 1;
+  }
+
+  body.high-contrast {
+    --bg-deep:    #000000;
+    --bg-panel:   #050505;
+    --bg-card:    #0a0a0a;
+    --bg-card-2:  #111111;
+    --cyan:       #00ffff;
+    --purple:     #ff66ff;
+    --amber:      #ffd700;
+    --green:      #00ff66;
+    --text-main:  #ffffff;
+    --text-muted: #cccccc;
+    --border:     rgba(0,255,255,0.45);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg-deep);
+    color: var(--text-main);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: calc(14.5px * var(--fs));
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
+    transition: background 0.3s, color 0.3s;
+  }
+
+  /* grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* radial glow background */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(circle at 20% 30%, rgba(0,229,255,0.08) 0%, transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba(198,83,255,0.08) 0%, transparent 40%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* scan line */
+  .scanline {
+    position: fixed; top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+    animation: scan 8s linear infinite;
+    opacity: 0.4;
+    z-index: 90;
+    pointer-events: none;
+  }
+  @keyframes scan { 0% { top: 0; } 100% { top: 100vh; } }
+
+  /* ═══ ACCESSIBILITY PANEL ═══ */
+  .a11y-panel {
+    position: fixed;
+    top: 14px; right: 14px;
+    z-index: 200;
+    background: rgba(8,15,30,0.95);
+    backdrop-filter: blur(8px);
+    border: 1.5px solid var(--cyan);
+    border-radius: 8px;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 4px 20px rgba(0,229,255,0.15);
+    animation: fadeIn 0.6s ease 0.2s both;
+  }
+  .a11y-label {
+    font-family: 'Orbitron', sans-serif;
+    font-size: calc(8px * var(--fs));
+    color: var(--cyan);
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    padding: 0 6px 0 4px;
+    border-right: 1px solid rgba(0,229,255,0.25);
+  }
+  .a11y-btn {
+    background: transparent;
+    border: 1px solid rgba(0,229,255,0.3);
+    color: var(--cyan);
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: calc(11px * var(--fs));
+    width: 32px; height: 28px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .a11y-btn:hover { background: var(--cyan); color: var(--bg-deep); box-shadow: var(--glow-cyan); }
+  .a11y-btn.active { background: var(--cyan); color: var(--bg-deep); }
+  .a11y-btn.small { font-size: calc(9px * var(--fs)); }
+  .a11y-btn.large { font-size: calc(14px * var(--fs)); }
+  .a11y-btn.contrast { width: auto; padding: 0 8px; font-size: calc(9px * var(--fs)); letter-spacing: 0.5px; }
+
+  /* ═══ HERO ═══ */
+  .page-wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 50px 22px 60px;
+  }
+
+  .hero {
+    text-align: center;
+    margin-bottom: 40px;
+    animation: fadeDown 0.7s ease both;
+    position: relative;
+  }
+
+  .hero-badge {
+    display: inline-block;
+    font-size: calc(9.5px * var(--fs));
+    color: var(--cyan);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    padding: 6px 18px;
+    border: 1px solid rgba(0,229,255,0.3);
+    border-radius: 30px;
+    background: rgba(0,229,255,0.05);
+    margin-bottom: 20px;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 600;
+  }
+
+  .hero-drone-stage {
+    width: 200px;
+    height: 200px;
+    margin: 0 auto 22px;
+    position: relative;
+  }
+  .orbit-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 1px dashed rgba(0,229,255,0.25);
+    animation: rotate 22s linear infinite;
+  }
+  .orbit-ring::before {
+    content: '';
+    position: absolute;
+    top: -4px; left: 50%;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: var(--glow-cyan);
+    transform: translateX(-50%);
+  }
+  .orbit-ring.r2 {
+    inset: 18px;
+    border-color: rgba(198,83,255,0.25);
+    animation: rotate 16s linear infinite reverse;
+  }
+  .orbit-ring.r2::before {
+    background: var(--purple);
+    box-shadow: var(--glow-purple);
+    width: 6px; height: 6px;
+  }
+  .orbit-ring.r3 {
+    inset: 36px;
+    border-color: rgba(255,171,0,0.2);
+    animation: rotate 12s linear infinite;
+  }
+  .orbit-ring.r3::before {
+    background: var(--amber);
+    box-shadow: var(--glow-amber);
+    width: 5px; height: 5px;
+  }
+  @keyframes rotate {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+
+  .hero-drone {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: hover-float 3.2s ease-in-out infinite;
+  }
+  .hero-drone svg { width: 130px; height: 90px; filter: drop-shadow(0 0 18px var(--cyan)); }
+  .rotor-spin { animation: rotor-blur 0.18s linear infinite; transform-origin: center; transform-box: fill-box; }
+  @keyframes rotor-blur {
+    from { transform: scaleX(1); }
+    50%  { transform: scaleX(0.06); }
+    to   { transform: scaleX(1); }
+  }
+  @keyframes hover-float {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(-12px); }
+  }
+
+  .hero h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(28px, 5vw, 46px);
+    font-weight: 900;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    line-height: 1.05;
+    text-shadow: var(--glow-cyan);
+    margin-bottom: 12px;
+  }
+  .hero h1 .glitch-1 { color: var(--cyan); }
+  .hero h1 .glitch-2 { color: var(--purple); }
+
+  .hero-tagline {
+    font-size: calc(13px * var(--fs));
+    color: var(--text-muted);
+    letter-spacing: 1.5px;
+    max-width: 580px;
+    margin: 0 auto 14px;
+    line-height: 1.6;
+  }
+
+  .hero-meta {
+    display: inline-flex;
+    gap: 18px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 6px;
+  }
+  .hero-meta-item {
+    font-family: 'Orbitron', sans-serif;
+    font-size: calc(10px * var(--fs));
+    color: var(--text-muted);
+    letter-spacing: 1.5px;
+  }
+  .hero-meta-item strong { color: var(--cyan); }
+
+  /* ═══ STATS BAR ═══ */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin: 30px 0 40px;
+    animation: fadeUp 0.8s ease 0.2s both;
+  }
+  @media (max-width: 720px) { .stats-bar { grid-template-columns: repeat(2, 1fr); } }
+
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 12px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+  }
+  .stat-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--cyan);
+    box-shadow: var(--glow-cyan);
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--cyan);
+  }
+  .stat-card.purple::before { background: var(--purple); }
+  .stat-card.amber::before  { background: var(--amber); }
+  .stat-card.green::before  { background: var(--green); }
+
+  .stat-num {
+    font-family: 'Orbitron', sans-serif;
+    font-size: calc(28px * var(--fs));
+    font-weight: 900;
+    color: var(--cyan);
+    line-height: 1;
+    text-shadow: 0 0 12px rgba(0,229,255,0.4);
+  }
+  .stat-card.purple .stat-num { color: var(--purple); text-shadow: 0 0 12px rgba(198,83,255,0.4); }
+  .stat-card.amber  .stat-num { color: var(--amber);  text-shadow: 0 0 12px rgba(255,171,0,0.4); }
+  .stat-card.green  .stat-num { color: var(--green); text-shadow: 0 0 12px rgba(0,230,118,0.4); }
+  .stat-unit {
+    font-family: 'Orbitron', sans-serif;
+    font-size: calc(11px * var(--fs));
+    color: inherit;
+    margin-left: 2px;
+    opacity: 0.85;
+  }
+  .stat-label {
+    font-size: calc(9.5px * var(--fs));
+    color: var(--text-muted);
+    margin-top: 6px;
+    letter-spacing: 0.8px;
+    line-height: 1.4;
+  }
+
+  /* ═══ TAB BAR — VS CODE EDITOR STYLE ═══ */
+  .tab-bar {
+    display: flex;
+    background: rgba(4, 8, 16, 0.96);
+    border: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    border-radius: 6px 6px 0 0;
+    margin-bottom: 0;
+    padding: 0;
+    position: sticky;
+    top: 12px;
+    z-index: 50;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+    animation: fadeUp 0.8s ease 0.3s both;
+    overflow-x: auto;
+    overflow-y: visible;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0,229,255,0.3) transparent;
+  }
+  .tab-bar::-webkit-scrollbar { height: 3px; }
+  .tab-bar::-webkit-scrollbar-track { background: transparent; }
+  .tab-bar::-webkit-scrollbar-thumb { background: rgba(0,229,255,0.25); border-radius: 2px; }
+
+  .tab-btn {
+    flex: 1 1 0;
+    min-width: 160px;
+    background: transparent;
+    border: none;
+    border-right: 1px solid var(--border);
+    padding: 11px 16px 12px;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: calc(11.5px * var(--fs));
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    transition: background 0.18s ease, color 0.18s ease;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    text-align: left;
+    position: relative;
+    white-space: nowrap;
+  }
+  .tab-btn:first-child { border-top-left-radius: 5px; }
+  .tab-btn:last-child  { border-right: none; border-top-right-radius: 5px; }
+
+  /* top accent stripe */
+  .tab-btn::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: transparent;
+    transition: background 0.2s, box-shadow 0.2s;
+    pointer-events: none;
+  }
+  /* tiny "live" indicator dot — matches VS Code modified marker */
+  .tab-btn::after {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    opacity: 0.35;
+    flex-shrink: 0;
+    margin-left: auto;
+    transition: all 0.2s;
+  }
+
+  .tab-btn .tab-icon {
+    font-size: calc(15px * var(--fs));
+    flex-shrink: 0;
+    line-height: 1;
+    filter: grayscale(0.65);
+    opacity: 0.75;
+    transition: filter 0.2s, opacity 0.2s;
+  }
+  .tab-btn .tab-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-shrink: 1;
+    line-height: 1.2;
+  }
+
+  .tab-btn:hover {
+    color: var(--text-main);
+    background: rgba(255, 255, 255, 0.025);
+  }
+  .tab-btn:hover .tab-icon { filter: none; opacity: 1; }
+  .tab-btn:hover::after { opacity: 0.6; }
+
+  /* ─── ACTIVE TAB ─── visually merges with module card below */
+  .tab-btn.active {
+    background: var(--bg-card);
+    color: #fff;
+  }
+  .tab-btn.active .tab-icon { filter: none; opacity: 1; }
+
+  /* punch through the tab bar's bottom border */
+  .tab-btn.active .tab-bottom-cover {
+    position: absolute;
+    left: 0; right: 0;
+    bottom: -1px;
+    height: 1px;
+    background: var(--bg-card);
+    z-index: 2;
+  }
+
+  /* glowing top accent stripe */
+  .tab-btn.active::before {
+    background: var(--cyan);
+    box-shadow: 0 0 8px var(--cyan), 0 0 2px var(--cyan);
+  }
+  .tab-btn.active.purple::before { background: var(--purple); box-shadow: 0 0 8px var(--purple), 0 0 2px var(--purple); }
+  .tab-btn.active.amber::before  { background: var(--amber);  box-shadow: 0 0 8px var(--amber),  0 0 2px var(--amber); }
+  .tab-btn.active.green::before  { background: var(--green);  box-shadow: 0 0 8px var(--green),  0 0 2px var(--green); }
+
+  /* active tab — pulsing live dot matching the active colour */
+  .tab-btn.active::after {
+    background: var(--cyan);
+    opacity: 1;
+    box-shadow: 0 0 6px var(--cyan);
+    animation: tab-pulse 2s ease-in-out infinite;
+  }
+  .tab-btn.active.purple::after { background: var(--purple); box-shadow: 0 0 6px var(--purple); }
+  .tab-btn.active.amber::after  { background: var(--amber);  box-shadow: 0 0 6px var(--amber); }
+  .tab-btn.active.green::after  { background: var(--green);  box-shadow: 0 0 6px var(--green); }
+
+  @keyframes tab-pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50%       { transform: scale(0.7); opacity: 0.6; }
+  }
+
+  /* tab bar wrapper — for the IDE window feel */
+  .ide-window {
+    margin-bottom: 30px;
+    position: relative;
+  }
+
+  @media (max-width: 600px) {
+    .tab-btn { min-width: 140px; padding: 10px 13px; font-size: calc(10.5px * var(--fs)); gap: 8px; }
+    .tab-btn::after { width: 5px; height: 5px; }
+  }
+
+  /* ═══ TAB PANELS ═══ */
+  .tab-panel {
+    display: none;
+    animation: panelEnter 0.5s ease both;
+  }
+  .tab-panel.active { display: block; }
+
+  @keyframes panelEnter {
+    from { opacity: 0; transform: translateY(15px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .module-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    overflow: hidden;
+    margin-bottom: 0;
+    position: relative;
+  }
+  .module-card.cyan   { border-color: rgba(0,229,255,0.3); border-top: none; }
+  .module-card.purple { border-color: rgba(198,83,255,0.3); border-top: none; }
+  .module-card.amber  { border-color: rgba(255,171,0,0.3);  border-top: none; }
+  .module-card.green  { border-color: rgba(0,230,118,0.3);  border-top: none; }
+
+  /* top accent stripe hidden — handled by active tab indicator */
+  .module-card::before { display: none; }
+
+  .module-header {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 28px;
+    padding: 32px 32px 28px;
+    align-items: center;
+    background: linear-gradient(135deg, rgba(0,229,255,0.03) 0%, rgba(198,83,255,0.03) 100%);
+  }
+  @media (max-width: 880px) {
+    .module-header { grid-template-columns: 1fr; padding: 24px 20px; gap: 20px; }
+  }
+
+  .module-info { min-width: 0; }
+
+  .module-tags {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+  .module-tag {
+    font-family: 'Orbitron', sans-serif;
+    font-size: calc(9px * var(--fs));
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    padding: 4px 10px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    border: 1px solid;
+  }
+  .module-tag.cyan   { color: var(--cyan);   border-color: rgba(0,229,255,0.4); background: rgba(0,229,255,0.08); }
+  .module-tag.purple { color: var(--purple); border-color: rgba(198,83,255,0.4); background: rgba(198,83,255,0.08); }
+  .module-tag.amber  { color: var(--amber);  border-color: rgba(255,171,0,0.4);  background: rgba(255,171,0,0.08); }
+  .module-tag.green  { color: var(--green);  border-color: rgba(0,230,118,0.4);  background: rgba(0,230,118,0.08); }
+
+  .module-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(22px, 3.4vw, 30px);
+    font-weight: 900;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    line-height: 1.1;
+    margin-bottom: 12px;
+  }
+  .module-title .accent { color: var(--cyan); }
+  .module-card.purple .module-title .accent { color: var(--purple); }
+  .module-card.amber  .module-title .accent { color: var(--amber); }
+  .module-card.green  .module-title .accent { color: var(--green); }
+
+  .module-desc {
+    font-size: calc(13.5px * var(--fs));
+    color: var(--text-main);
+    line-height: 1.7;
+    margin-bottom: 20px;
+  }
+
+  .launch-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: calc(13px * var(--fs));
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--bg-deep);
+    background: var(--cyan);
+    border: none;
+    padding: 14px 28px;
+    border-radius: 5px;
+    cursor: pointer;
+    box-shadow: var(--glow-cyan);
+    transition: all 0.25s;
+    position: relative;
+    overflow: hidden;
+  }
+  .launch-btn::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    transition: left 0.5s;
+  }
+  .launch-btn:hover { transform: translateY(-2px); box-shadow: 0 0 32px rgba(0,229,255,0.7); background: #fff; }
+  .launch-btn:hover::before { left: 100%; }
+  .launch-btn .arrow { font-size: calc(16px * var(--fs)); transition: transform 0.25s; }
+  .launch-btn:hover .arrow { transform: translateX(4px); }
+
+  .module-card.purple .launch-btn { background: var(--purple); box-shadow: var(--glow-purple); color: #fff; }
+  .module-card.purple .launch-btn:hover { box-shadow: 0 0 32px rgba(198,83,255,0.7); background: #fff; color: var(--bg-deep); }
+  .module-card.amber .launch-btn { background: var(--amber); box-shadow: var(--glow-amber); color: var(--bg-deep); }
+  .module-card.amber .launch-btn:hover { box-shadow: 0 0 32px rgba(255,171,0,0.7); background: #fff; }
+  .module-card.green .launch-btn { background: var(--green); box-shadow: var(--glow-green); color: var(--bg-deep); }
+  .module-card.green .launch-btn:hover { box-shadow: 0 0 32px rgba(0,230,118,0.7); background: #fff; }
+
+  /* ═══ MODULE VISUAL ═══ */
+  .module-visual {
+    width: 100%;
+    aspect-ratio: 4/3;
+    background: var(--bg-deep);
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid rgba(0,229,255,0.15);
+  }
+  @media (max-width: 880px) {
+    .module-visual { max-width: 360px; margin: 0 auto; }
+  }
+  .module-visual svg { width: 100%; height: 100%; display: block; }
+
+  /* ═══ MODULE BODY ═══ */
+  .module-body {
+    padding: 28px 32px 32px;
+    border-top: 1px solid var(--border);
+  }
+  @media (max-width: 880px) { .module-body { padding: 22px 20px 26px; } }
+
+  .module-body-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  @media (max-width: 720px) { .module-body-grid { grid-template-columns: 1fr; } }
+
+  .module-section-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: calc(11px * var(--fs));
+    font-weight: 700;
+    color: var(--cyan);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .module-card.purple .module-section-title { color: var(--purple); }
+  .module-card.amber  .module-section-title { color: var(--amber); }
+  .module-card.green  .module-section-title { color: var(--green); }
+
+  .module-section-title::before {
+    content: '◢';
+    font-size: calc(10px * var(--fs));
+  }
+
+  .feature-list { list-style: none; }
+  .feature-list li {
+    font-size: calc(12.5px * var(--fs));
+    color: var(--text-main);
+    padding: 7px 0 7px 22px;
+    line-height: 1.55;
+    position: relative;
+  }
+  .feature-list li::before {
+    content: '▸';
+    position: absolute;
+    left: 0;
+    color: var(--cyan);
+    font-weight: bold;
+  }
+  .module-card.purple .feature-list li::before { color: var(--purple); }
+  .module-card.amber  .feature-list li::before { color: var(--amber); }
+  .module-card.green  .feature-list li::before { color: var(--green); }
+
+  .info-row {
+    display: flex; justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px dashed rgba(0,229,255,0.12);
+    font-size: calc(12px * var(--fs));
+  }
+  .info-row:last-child { border-bottom: none; }
+  .info-row-label { color: var(--text-muted); letter-spacing: 0.5px; }
+  .info-row-value {
+    font-family: 'Orbitron', sans-serif;
+    color: var(--cyan);
+    font-weight: 600;
+  }
+  .module-card.purple .info-row-value { color: var(--purple); }
+  .module-card.amber  .info-row-value { color: var(--amber); }
+  .module-card.green  .info-row-value { color: var(--green); }
+
+  /* ═══ IFRAME OVERLAY ═══ */
+  .iframe-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--bg-deep);
+    z-index: 999;
+    display: none;
+    flex-direction: column;
+    animation: overlayEnter 0.4s ease;
+  }
+  .iframe-overlay.active { display: flex; }
+
+  @keyframes overlayEnter {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  .iframe-bar {
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--cyan);
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 2px 12px rgba(0,229,255,0.15);
+    flex-shrink: 0;
+  }
+  .iframe-back-btn {
+    background: transparent;
+    border: 1.5px solid var(--cyan);
+    color: var(--cyan);
+    font-family: 'Orbitron', sans-serif;
+    font-size: calc(11px * var(--fs));
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    padding: 7px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .iframe-back-btn:hover {
+    background: var(--cyan);
+    color: var(--bg-deep);
+    box-shadow: var(--glow-cyan);
+  }
+
+  .iframe-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: calc(12px * var(--fs));
+    color: #fff;
+    letter-spacing: 1.5px;
+    font-weight: 600;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .iframe-title-tag {
+    color: var(--cyan);
+    font-size: calc(9px * var(--fs));
+    margin-right: 8px;
+  }
+
+  .iframe-pulse {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 10px var(--green);
+    animation: pulse-dot 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.5; transform: scale(0.8); }
+  }
+  .iframe-status {
+    font-family: 'Orbitron', sans-serif;
+    font-size: calc(9px * var(--fs));
+    color: var(--green);
+    letter-spacing: 1.5px;
+  }
+
+  .iframe-frame {
+    flex: 1;
+    border: none;
+    background: var(--bg-deep);
+    width: 100%;
+  }
+
+  /* loading state */
+  .iframe-loading {
+    position: absolute;
+    inset: 41px 0 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-deep);
+    z-index: 1;
+    pointer-events: none;
+    transition: opacity 0.4s;
+  }
+  .iframe-loading.hidden { opacity: 0; }
+  .loading-drone {
+    width: 80px; height: 60px;
+    animation: hover-float 2s ease-in-out infinite;
+  }
+  .loading-drone svg { width: 100%; height: 100%; filter: drop-shadow(0 0 14px var(--cyan)); }
+  .loading-text {
+    font-family: 'Orbitron', sans-serif;
+    font-size: calc(11px * var(--fs));
+    color: var(--cyan);
+    letter-spacing: 3px;
+    margin-top: 16px;
+    text-align: center;
+  }
+  .loading-dots span {
+    animation: blink 1.4s infinite both;
+    display: inline-block;
+  }
+  .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes blink {
+    0%, 80%, 100% { opacity: 0; }
+    40% { opacity: 1; }
+  }
+
+  /* ═══ FOOTER ═══ */
+  .footer {
+    text-align: center;
+    margin-top: 50px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(0,229,255,0.12);
+  }
+  .footer p { font-size: calc(10.5px * var(--fs)); color: var(--text-muted); letter-spacing: 1px; margin-bottom: 4px; }
+  .footer .brand {
+    font-family: 'Orbitron', sans-serif;
+    font-size: calc(10.5px * var(--fs));
+    color: var(--cyan);
+    opacity: 0.7;
+    margin-top: 4px;
+    letter-spacing: 2px;
+  }
+
+  /* animations */
+  @keyframes fadeIn   { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes fadeDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeUp   { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* mobile tweaks */
+  @media (max-width: 540px) {
+    .a11y-panel { top: 10px; right: 10px; padding: 6px; }
+    .a11y-label { display: none; }
+    .page-wrap { padding: 50px 14px 50px; }
+    .hero-drone-stage { width: 160px; height: 160px; }
+    .hero-drone svg { width: 100px; height: 70px; }
+    .module-header { padding: 22px 18px; }
+    .module-body { padding: 20px 18px; }
+    .tab-btn { padding: 10px 8px; font-size: calc(9.5px * var(--fs)); }
+    .tab-icon { font-size: calc(16px * var(--fs)); }
+  }
+
+  /* reduce motion */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* hide scrollbar on iframe */
+  .iframe-overlay { overflow: hidden; }
+</style>
+</head>
+<body>
+
+<div class="scanline"></div>
+
+<!-- ═══ ACCESSIBILITY PANEL ═══ -->
+<div class="a11y-panel" role="toolbar" aria-label="Display options">
+  <div class="a11y-label">A11Y</div>
+  <button class="a11y-btn small" id="fontDown" title="Smaller text" aria-label="Decrease font size">A−</button>
+  <button class="a11y-btn" id="fontReset" title="Reset text size" aria-label="Reset font size">A</button>
+  <button class="a11y-btn large" id="fontUp" title="Larger text" aria-label="Increase font size">A+</button>
+  <button class="a11y-btn contrast" id="contrastToggle" title="High contrast" aria-label="Toggle high contrast">◐ HC</button>
+</div>
+
+<div class="page-wrap">
+
+  <!-- ═══ HERO ═══ -->
+  <div class="hero">
+    <div class="hero-badge">// Year 8–12 Digital Technologies //</div>
+
+    <div class="hero-drone-stage">
+      <div class="orbit-ring"></div>
+      <div class="orbit-ring r2"></div>
+      <div class="orbit-ring r3"></div>
+      <div class="hero-drone">
+        <svg viewBox="0 0 130 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <line x1="65" y1="45" x2="22" y2="22" stroke="#00e5ff" stroke-width="3" stroke-linecap="round"/>
+          <line x1="65" y1="45" x2="108" y2="22" stroke="#00e5ff" stroke-width="3" stroke-linecap="round"/>
+          <line x1="65" y1="45" x2="22" y2="68" stroke="#00e5ff" stroke-width="3" stroke-linecap="round"/>
+          <line x1="65" y1="45" x2="108" y2="68" stroke="#00e5ff" stroke-width="3" stroke-linecap="round"/>
+          <ellipse class="rotor-spin" cx="22"  cy="22" rx="15" ry="4.5" fill="none" stroke="#c653ff" stroke-width="2"/>
+          <ellipse class="rotor-spin" cx="108" cy="22" rx="15" ry="4.5" fill="none" stroke="#c653ff" stroke-width="2"/>
+          <ellipse class="rotor-spin" cx="22"  cy="68" rx="15" ry="4.5" fill="none" stroke="#c653ff" stroke-width="2"/>
+          <ellipse class="rotor-spin" cx="108" cy="68" rx="15" ry="4.5" fill="none" stroke="#c653ff" stroke-width="2"/>
+          <rect x="52" y="33" width="26" height="22" rx="4" fill="#0b1425" stroke="#00e5ff" stroke-width="2"/>
+          <circle cx="65" cy="60" r="4.5" fill="#00e5ff" opacity="0.85"/>
+          <circle cx="65" cy="44" r="3" fill="#c653ff"/>
+          <circle cx="22"  cy="22" r="2.8" fill="#ff1744"/>
+          <circle cx="108" cy="22" r="2.8" fill="#00e676"/>
+        </svg>
+      </div>
+    </div>
+
+    <h1>Drone <span class="glitch-1">Education</span> <span class="glitch-2">Hub</span></h1>
+    <p class="hero-tagline">Four interactive modules to take you from grounded rookie to drone pilot — covering safety regulations, block-based coding, Python programming, and full flight simulation.</p>
+
+    <div class="hero-meta">
+      <div class="hero-meta-item"><strong>4</strong> MODULES</div>
+      <div class="hero-meta-item"><strong>YR 8–12</strong></div>
+      <div class="hero-meta-item"><strong>BROWSER</strong> NO INSTALL</div>
+      <div class="hero-meta-item"><strong>FREE</strong> FOR ALL STUDENTS</div>
+    </div>
+  </div>
+
+  <!-- ═══ STATS BAR ═══ -->
+  <div class="stats-bar">
+    <div class="stat-card" data-target="4">
+      <div><span class="stat-num" data-counter>0</span><span class="stat-unit">modules</span></div>
+      <div class="stat-label">LEARNING MODULES</div>
+    </div>
+    <div class="stat-card purple" data-target="50" data-suffix="+">
+      <div><span class="stat-num" data-counter>0</span><span class="stat-unit">+</span></div>
+      <div class="stat-label">DRONE COMMANDS</div>
+    </div>
+    <div class="stat-card amber" data-target="3" data-suffix="D">
+      <div><span class="stat-num" data-counter>0</span><span class="stat-unit">D</span></div>
+      <div class="stat-label">3D FLIGHT VIEWPORT</div>
+    </div>
+    <div class="stat-card green" data-target="100" data-suffix="%">
+      <div><span class="stat-num" data-counter>0</span><span class="stat-unit">%</span></div>
+      <div class="stat-label">SAFE TO LEARN</div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB BAR ═══ -->
+  <div class="tab-bar" role="tablist">
+    <button class="tab-btn active" data-tab="0" role="tab" aria-selected="true">
+      <span class="tab-icon">🛡️</span>
+      <span class="tab-text">Drone Safety</span>
+      <span class="tab-bottom-cover"></span>
+    </button>
+    <button class="tab-btn purple" data-tab="1" role="tab" aria-selected="false">
+      <span class="tab-icon">🧩</span>
+      <span class="tab-text">Block Edition</span>
+      <span class="tab-bottom-cover"></span>
+    </button>
+    <button class="tab-btn amber" data-tab="2" role="tab" aria-selected="false">
+      <span class="tab-icon">🐍</span>
+      <span class="tab-text">Python Edition</span>
+      <span class="tab-bottom-cover"></span>
+    </button>
+    <button class="tab-btn green" data-tab="3" role="tab" aria-selected="false">
+      <span class="tab-icon">🎮</span>
+      <span class="tab-text">Tello Flight Sim</span>
+      <span class="tab-bottom-cover"></span>
+    </button>
+  </div>
+
+  <!-- ═══════════════════ TAB 1: DRONE SAFETY ═══════════════════ -->
+  <div class="tab-panel active" data-panel="0">
+    <div class="module-card cyan">
+      <div class="module-header">
+        <div class="module-info">
+          <div class="module-tags">
+            <span class="module-tag cyan">YEAR 8–12</span>
+            <span class="module-tag cyan">CASA APPROVED</span>
+            <span class="module-tag cyan">★ START HERE</span>
+          </div>
+          <h2 class="module-title">Drone Safety <span class="accent">&amp; Regulations</span></h2>
+          <p class="module-desc">Before you fly anything, you need to know the rules. Built around the official <strong>CASA Know Your Drone</strong> course, this module teaches every Australian drone pilot — yes, even hobbyists — what's legal, safe, and smart. You'll work through video lessons, hands-on simulators, and real-world scenarios across Victoria.</p>
+          <button class="launch-btn" data-launch="0">
+            <span>Launch Module</span>
+            <span class="arrow">→</span>
+          </button>
+        </div>
+        <div class="module-visual">
+          <!-- SAFETY VISUAL: drone in safety zone -->
+          <svg viewBox="0 0 320 240" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <radialGradient id="safe-bg" cx="50%" cy="40%" r="65%">
+                <stop offset="0%" stop-color="#0d1f3c"/>
+                <stop offset="100%" stop-color="#050a14"/>
+              </radialGradient>
+              <filter id="safe-glow"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            </defs>
+            <rect width="320" height="240" fill="url(#safe-bg)"/>
+            <!-- altitude grid -->
+            <g stroke="#00e5ff" stroke-width="0.4" opacity="0.2">
+              <line x1="0" y1="50"  x2="320" y2="50"/>
+              <line x1="0" y1="90"  x2="320" y2="90"/>
+              <line x1="0" y1="130" x2="320" y2="130"/>
+              <line x1="0" y1="170" x2="320" y2="170"/>
+            </g>
+            <!-- 120m line -->
+            <line x1="0" y1="60" x2="320" y2="60" stroke="#ff1744" stroke-width="1.2" stroke-dasharray="6 4" opacity="0.7"/>
+            <text x="10" y="55" fill="#ff1744" font-family="monospace" font-size="9" font-weight="bold">120m MAX</text>
+            <!-- safe zone bracket -->
+            <rect x="10" y="60" width="300" height="130" fill="#00e676" opacity="0.04"/>
+            <text x="296" y="75" fill="#00e676" font-family="monospace" font-size="8" text-anchor="end" opacity="0.7">SAFE FLIGHT ZONE</text>
+            <!-- ground -->
+            <rect x="0" y="190" width="320" height="50" fill="#0a1828"/>
+            <line x1="0" y1="190" x2="320" y2="190" stroke="#00e5ff" stroke-width="1" opacity="0.5"/>
+            <!-- person on ground -->
+            <g transform="translate(80,180)" fill="#7b8cb0">
+              <circle cx="0" cy="-2" r="4"/>
+              <rect x="-4" y="2" width="8" height="14" rx="1.5"/>
+              <line x1="-4" y1="6" x2="-9" y2="14" stroke="#7b8cb0" stroke-width="2.5"/>
+              <line x1=" 4" y1="6" x2=" 9" y2="14" stroke="#7b8cb0" stroke-width="2.5"/>
+            </g>
+            <!-- 30m radius arc from person -->
+            <path d="M 30 190 A 50 50 0 0 1 130 190" fill="none" stroke="#ffab00" stroke-width="1" stroke-dasharray="4 3" opacity="0.6"/>
+            <text x="80" y="135" fill="#ffab00" font-family="monospace" font-size="8" text-anchor="middle" opacity="0.85">30m SAFE DISTANCE</text>
+            <!-- drone hovering safely -->
+            <g filter="url(#safe-glow)" transform="translate(220,110)">
+              <line x1="0" y1="0" x2="-26" y2="-15" stroke="#00e5ff" stroke-width="2.4" stroke-linecap="round"/>
+              <line x1="0" y1="0" x2=" 26" y2="-15" stroke="#00e5ff" stroke-width="2.4" stroke-linecap="round"/>
+              <line x1="0" y1="0" x2="-26" y2=" 15" stroke="#00e5ff" stroke-width="2.4" stroke-linecap="round"/>
+              <line x1="0" y1="0" x2=" 26" y2=" 15" stroke="#00e5ff" stroke-width="2.4" stroke-linecap="round"/>
+              <ellipse class="rotor-spin" cx="-26" cy="-15" rx="13" ry="4" fill="none" stroke="#c653ff" stroke-width="1.6"/>
+              <ellipse class="rotor-spin" cx=" 26" cy="-15" rx="13" ry="4" fill="none" stroke="#c653ff" stroke-width="1.6"/>
+              <ellipse class="rotor-spin" cx="-26" cy=" 15" rx="13" ry="4" fill="none" stroke="#c653ff" stroke-width="1.6"/>
+              <ellipse class="rotor-spin" cx=" 26" cy=" 15" rx="13" ry="4" fill="none" stroke="#c653ff" stroke-width="1.6"/>
+              <rect x="-10" y="-8" width="20" height="16" rx="3" fill="#0b1425" stroke="#00e5ff" stroke-width="1.6"/>
+              <circle cx="0" cy="0" r="3" fill="#00e676"/>
+            </g>
+            <!-- shield emblem -->
+            <g transform="translate(40,40)">
+              <path d="M 0,-15 L -12,-10 L -12,4 Q -12,14 0,18 Q 12,14 12,4 L 12,-10 Z" fill="rgba(0,229,255,0.1)" stroke="#00e5ff" stroke-width="1.5"/>
+              <text x="0" y="6" fill="#00e5ff" font-size="14" text-anchor="middle" font-weight="bold">✓</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <div class="module-body">
+        <div class="module-body-grid">
+          <div>
+            <div class="module-section-title">What You'll Learn</div>
+            <ul class="feature-list">
+              <li><strong>Altitude limits</strong> — why 120m is the magic number</li>
+              <li><strong>Safe distances</strong> — 30m from people, 5.5km from airports</li>
+              <li><strong>No-fly zones</strong> — national parks, stadiums, emergencies</li>
+              <li><strong>Pre-flight checks</strong> — battery, props, weather, location</li>
+              <li><strong>Real scenarios</strong> — six Victorian locations to test</li>
+            </ul>
+          </div>
+          <div>
+            <div class="module-section-title">Module Details</div>
+            <div class="info-row"><span class="info-row-label">Year Level</span><span class="info-row-value">8 – 12</span></div>
+            <div class="info-row"><span class="info-row-label">Duration</span><span class="info-row-value">~45 min</span></div>
+            <div class="info-row"><span class="info-row-label">Format</span><span class="info-row-value">Video + Sim + Quiz</span></div>
+            <div class="info-row"><span class="info-row-label">Source</span><span class="info-row-value">CASA Australia</span></div>
+            <div class="info-row"><span class="info-row-label">Outcome</span><span class="info-row-value">CASA Certificate</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ TAB 2: BLOCK EDITION ═══════════════════ -->
+  <div class="tab-panel" data-panel="1">
+    <div class="module-card purple">
+      <div class="module-header">
+        <div class="module-info">
+          <div class="module-tags">
+            <span class="module-tag purple">YEAR 7–9</span>
+            <span class="module-tag purple">BEGINNER</span>
+            <span class="module-tag purple">NO PYTHON NEEDED</span>
+          </div>
+          <h2 class="module-title">Drone Blocks <span class="accent">Studio</span> — Block Edition</h2>
+          <p class="module-desc">Drag, drop, and watch your drone fly. This block-coding playground lets you build flight missions visually — no syntax errors, no typing, just logic. Behind the scenes, your blocks generate real Python code so you can see how programming actually works. Perfect first step into coding.</p>
+          <button class="launch-btn" data-launch="1">
+            <span>Launch Module</span>
+            <span class="arrow">→</span>
+          </button>
+        </div>
+        <div class="module-visual">
+          <!-- BLOCK CODING VISUAL -->
+          <svg viewBox="0 0 320 240" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <radialGradient id="block-bg" cx="50%" cy="50%" r="70%">
+                <stop offset="0%" stop-color="#1a0a25"/>
+                <stop offset="100%" stop-color="#050a14"/>
+              </radialGradient>
+              <filter id="block-glow"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            </defs>
+            <rect width="320" height="240" fill="url(#block-bg)"/>
+            <!-- code blocks stacked -->
+            <g transform="translate(20,30)" filter="url(#block-glow)">
+              <!-- block 1: takeoff (green) -->
+              <path d="M 0,0 L 130,0 L 130,28 L 80,28 L 75,33 L 65,33 L 60,28 L 0,28 Z" fill="#00e676" opacity="0.85"/>
+              <text x="65" y="19" fill="#050a14" font-family="monospace" font-size="11" text-anchor="middle" font-weight="bold">▲ takeoff</text>
+
+              <!-- block 2: forward 100 (cyan) -->
+              <path d="M 0,28 L 60,28 L 65,33 L 75,33 L 80,28 L 150,28 L 150,56 L 80,56 L 75,61 L 65,61 L 60,56 L 0,56 Z" fill="#00e5ff" opacity="0.85"/>
+              <text x="75" y="47" fill="#050a14" font-family="monospace" font-size="10" text-anchor="middle" font-weight="bold">→ forward 100</text>
+
+              <!-- block 3: turn left (purple) -->
+              <path d="M 0,56 L 60,56 L 65,61 L 75,61 L 80,56 L 145,56 L 145,84 L 80,84 L 75,89 L 65,89 L 60,84 L 0,84 Z" fill="#c653ff" opacity="0.85"/>
+              <text x="72" y="75" fill="#fff" font-family="monospace" font-size="10" text-anchor="middle" font-weight="bold">↺ turn left 90</text>
+
+              <!-- block 4: forward (cyan) -->
+              <path d="M 0,84 L 60,84 L 65,89 L 75,89 L 80,84 L 150,84 L 150,112 L 80,112 L 75,117 L 65,117 L 60,112 L 0,112 Z" fill="#00e5ff" opacity="0.85"/>
+              <text x="75" y="103" fill="#050a14" font-family="monospace" font-size="10" text-anchor="middle" font-weight="bold">→ forward 100</text>
+
+              <!-- block 5: land (red) -->
+              <path d="M 0,112 L 60,112 L 65,117 L 75,117 L 80,112 L 130,112 L 130,140 L 0,140 Z" fill="#ff1744" opacity="0.85"/>
+              <text x="65" y="131" fill="#fff" font-family="monospace" font-size="11" text-anchor="middle" font-weight="bold">▼ land</text>
+            </g>
+
+            <!-- arrow connecting to drone -->
+            <path d="M 175 95 Q 220 95 240 105" fill="none" stroke="#c653ff" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.6"/>
+            <polygon points="238,100 245,105 238,110" fill="#c653ff"/>
+
+            <!-- drone executing -->
+            <g filter="url(#block-glow)" transform="translate(265,110)">
+              <line x1="0" y1="0" x2="-20" y2="-12" stroke="#00e5ff" stroke-width="2" stroke-linecap="round"/>
+              <line x1="0" y1="0" x2=" 20" y2="-12" stroke="#00e5ff" stroke-width="2" stroke-linecap="round"/>
+              <line x1="0" y1="0" x2="-20" y2=" 12" stroke="#00e5ff" stroke-width="2" stroke-linecap="round"/>
+              <line x1="0" y1="0" x2=" 20" y2=" 12" stroke="#00e5ff" stroke-width="2" stroke-linecap="round"/>
+              <ellipse class="rotor-spin" cx="-20" cy="-12" rx="10" ry="3" fill="none" stroke="#c653ff" stroke-width="1.5"/>
+              <ellipse class="rotor-spin" cx=" 20" cy="-12" rx="10" ry="3" fill="none" stroke="#c653ff" stroke-width="1.5"/>
+              <ellipse class="rotor-spin" cx="-20" cy=" 12" rx="10" ry="3" fill="none" stroke="#c653ff" stroke-width="1.5"/>
+              <ellipse class="rotor-spin" cx=" 20" cy=" 12" rx="10" ry="3" fill="none" stroke="#c653ff" stroke-width="1.5"/>
+              <rect x="-8" y="-7" width="16" height="14" rx="2.5" fill="#0b1425" stroke="#00e5ff" stroke-width="1.5"/>
+              <circle cx="0" cy="0" r="2.5" fill="#c653ff"/>
+            </g>
+
+            <!-- caption -->
+            <text x="160" y="225" text-anchor="middle" fill="#7b8cb0" font-family="monospace" font-size="9" letter-spacing="1.5">DRAG · DROP · FLY</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="module-body">
+        <div class="module-body-grid">
+          <div>
+            <div class="module-section-title">What You'll Build</div>
+            <ul class="feature-list">
+              <li><strong>3D missions</strong> — drag blocks to build flight paths</li>
+              <li><strong>Live 3D viewport</strong> — ISO, top, front, side, follow cam</li>
+              <li><strong>Real-time telemetry</strong> — altitude, position, heading</li>
+              <li><strong>Generated Python</strong> — see the code your blocks make</li>
+              <li><strong>Sample missions</strong> — load examples to learn from</li>
+            </ul>
+          </div>
+          <div>
+            <div class="module-section-title">Module Details</div>
+            <div class="info-row"><span class="info-row-label">Year Level</span><span class="info-row-value">7 – 9</span></div>
+            <div class="info-row"><span class="info-row-label">Difficulty</span><span class="info-row-value">Beginner</span></div>
+            <div class="info-row"><span class="info-row-label">Style</span><span class="info-row-value">Block Coding</span></div>
+            <div class="info-row"><span class="info-row-label">Output</span><span class="info-row-value">Python Code</span></div>
+            <div class="info-row"><span class="info-row-label">Visualisation</span><span class="info-row-value">3D Sandbox</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ TAB 3: PYTHON EDITION ═══════════════════ -->
+  <div class="tab-panel" data-panel="2">
+    <div class="module-card amber">
+      <div class="module-header">
+        <div class="module-info">
+          <div class="module-tags">
+            <span class="module-tag amber">YEAR 9–12</span>
+            <span class="module-tag amber">INTERMEDIATE</span>
+            <span class="module-tag amber">REAL CODE</span>
+          </div>
+          <h2 class="module-title">Drone Blocks Studio — <span class="accent">Python Edition</span></h2>
+          <p class="module-desc">Step up from blocks to writing real Python. Use the same libraries that power actual <strong>DJI Tello drones</strong> in industry — switch between the friendly <em>DroneBlocks</em> wrapper and the full <em>djitellopy</em> library. Write, run, and debug your missions in a self-hosted classroom editor. This is the same Python you'd use to fly a real drone.</p>
+          <button class="launch-btn" data-launch="2">
+            <span>Launch Module</span>
+            <span class="arrow">→</span>
+          </button>
+        </div>
+        <div class="module-visual">
+          <!-- PYTHON CODE VISUAL -->
+          <svg viewBox="0 0 320 240" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="py-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#1a1208"/>
+                <stop offset="100%" stop-color="#050a14"/>
+              </linearGradient>
+              <filter id="py-glow"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            </defs>
+            <rect width="320" height="240" fill="url(#py-bg)"/>
+
+            <!-- editor window frame -->
+            <rect x="14" y="14" width="200" height="200" rx="6" fill="#0b1425" stroke="#ffab00" stroke-width="1.2" opacity="0.95"/>
+
+            <!-- title bar -->
+            <rect x="14" y="14" width="200" height="20" rx="6" fill="#1a1208" stroke="#ffab00" stroke-width="1.2"/>
+            <circle cx="24" cy="24" r="3" fill="#ff1744"/>
+            <circle cx="34" cy="24" r="3" fill="#ffab00"/>
+            <circle cx="44" cy="24" r="3" fill="#00e676"/>
+            <text x="65" y="27" fill="#ffab00" font-family="monospace" font-size="8" font-weight="bold">mission.py</text>
+
+            <!-- line numbers -->
+            <g fill="#7b8cb0" font-family="monospace" font-size="8" opacity="0.5">
+              <text x="22" y="55">1</text>
+              <text x="22" y="70">2</text>
+              <text x="22" y="85">3</text>
+              <text x="22" y="100">4</text>
+              <text x="22" y="115">5</text>
+              <text x="22" y="130">6</text>
+              <text x="22" y="145">7</text>
+              <text x="22" y="160">8</text>
+              <text x="22" y="175">9</text>
+              <text x="22" y="190">10</text>
+            </g>
+
+            <!-- python code -->
+            <g font-family="monospace" font-size="9">
+              <text x="36" y="55"><tspan fill="#c653ff">from</tspan><tspan fill="#ccd6f6"> djitellopy </tspan><tspan fill="#c653ff">import</tspan><tspan fill="#ccd6f6"> Tello</tspan></text>
+              <text x="36" y="85"><tspan fill="#ccd6f6">tello = Tello()</tspan></text>
+              <text x="36" y="100"><tspan fill="#ccd6f6">tello.</tspan><tspan fill="#00e5ff">connect</tspan><tspan fill="#ccd6f6">()</tspan></text>
+              <text x="36" y="115"><tspan fill="#ccd6f6">tello.</tspan><tspan fill="#00e5ff">takeoff</tspan><tspan fill="#ccd6f6">()</tspan></text>
+              <text x="36" y="145"><tspan fill="#7b8cb0"># fly a square</tspan></text>
+              <text x="36" y="160"><tspan fill="#c653ff">for</tspan><tspan fill="#ccd6f6"> i </tspan><tspan fill="#c653ff">in</tspan><tspan fill="#ccd6f6"> </tspan><tspan fill="#00e5ff">range</tspan><tspan fill="#ccd6f6">(</tspan><tspan fill="#ffab00">4</tspan><tspan fill="#ccd6f6">):</tspan></text>
+              <text x="46" y="175"><tspan fill="#ccd6f6">tello.</tspan><tspan fill="#00e5ff">forward</tspan><tspan fill="#ccd6f6">(</tspan><tspan fill="#ffab00">100</tspan><tspan fill="#ccd6f6">)</tspan></text>
+              <text x="46" y="190"><tspan fill="#ccd6f6">tello.</tspan><tspan fill="#00e5ff">cw</tspan><tspan fill="#ccd6f6">(</tspan><tspan fill="#ffab00">90</tspan><tspan fill="#ccd6f6">)</tspan></text>
+            </g>
+
+            <!-- cursor blink -->
+            <rect x="78" y="195" width="6" height="10" fill="#ffab00">
+              <animate attributeName="opacity" values="1;0;1" dur="1s" repeatCount="indefinite"/>
+            </rect>
+
+            <!-- arrow to drone -->
+            <path d="M 220 110 Q 245 110 260 120" fill="none" stroke="#ffab00" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.6"/>
+            <polygon points="258,115 265,120 258,125" fill="#ffab00"/>
+
+            <!-- drone executing the code -->
+            <g filter="url(#py-glow)" transform="translate(280,130)">
+              <line x1="0" y1="0" x2="-18" y2="-11" stroke="#ffab00" stroke-width="2" stroke-linecap="round"/>
+              <line x1="0" y1="0" x2=" 18" y2="-11" stroke="#ffab00" stroke-width="2" stroke-linecap="round"/>
+              <line x1="0" y1="0" x2="-18" y2=" 11" stroke="#ffab00" stroke-width="2" stroke-linecap="round"/>
+              <line x1="0" y1="0" x2=" 18" y2=" 11" stroke="#ffab00" stroke-width="2" stroke-linecap="round"/>
+              <ellipse class="rotor-spin" cx="-18" cy="-11" rx="9" ry="2.8" fill="none" stroke="#00e5ff" stroke-width="1.4"/>
+              <ellipse class="rotor-spin" cx=" 18" cy="-11" rx="9" ry="2.8" fill="none" stroke="#00e5ff" stroke-width="1.4"/>
+              <ellipse class="rotor-spin" cx="-18" cy=" 11" rx="9" ry="2.8" fill="none" stroke="#00e5ff" stroke-width="1.4"/>
+              <ellipse class="rotor-spin" cx=" 18" cy=" 11" rx="9" ry="2.8" fill="none" stroke="#00e5ff" stroke-width="1.4"/>
+              <rect x="-7" y="-6" width="14" height="12" rx="2" fill="#0b1425" stroke="#ffab00" stroke-width="1.4"/>
+              <circle cx="0" cy="0" r="2" fill="#ffab00"/>
+            </g>
+
+            <!-- circular flight path under drone -->
+            <circle cx="280" cy="170" r="22" fill="none" stroke="#00e5ff" stroke-width="0.8" stroke-dasharray="3 3" opacity="0.5"/>
+
+            <text x="160" y="227" text-anchor="middle" fill="#7b8cb0" font-family="monospace" font-size="9" letter-spacing="1.5">CODE · COMPILE · COMMAND</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="module-body">
+        <div class="module-body-grid">
+          <div>
+            <div class="module-section-title">What You'll Master</div>
+            <ul class="feature-list">
+              <li><strong>Two libraries</strong> — DroneBlocks (easy) &amp; djitellopy (real)</li>
+              <li><strong>Python editor</strong> — full syntax highlighting</li>
+              <li><strong>Loops &amp; logic</strong> — for, while, if, conditions</li>
+              <li><strong>Built-in reference</strong> — every command documented</li>
+              <li><strong>3D simulation</strong> — see your code fly before deploying</li>
+            </ul>
+          </div>
+          <div>
+            <div class="module-section-title">Module Details</div>
+            <div class="info-row"><span class="info-row-label">Year Level</span><span class="info-row-value">9 – 12</span></div>
+            <div class="info-row"><span class="info-row-label">Difficulty</span><span class="info-row-value">Intermediate</span></div>
+            <div class="info-row"><span class="info-row-label">Language</span><span class="info-row-value">Python 3</span></div>
+            <div class="info-row"><span class="info-row-label">Libraries</span><span class="info-row-value">djitellopy</span></div>
+            <div class="info-row"><span class="info-row-label">Real World</span><span class="info-row-value">DJI Tello</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ TAB 4: TELLO FLIGHT SIM ═══════════════════ -->
+  <div class="tab-panel" data-panel="3">
+    <div class="module-card green">
+      <div class="module-header">
+        <div class="module-info">
+          <div class="module-tags">
+            <span class="module-tag green">YEAR 8–12</span>
+            <span class="module-tag green">★ AI POWERED</span>
+            <span class="module-tag green">2 ENVIRONMENTS</span>
+          </div>
+          <h2 class="module-title">Tello Drone <span class="accent">AI Flight Simulator</span></h2>
+          <p class="module-desc">Time to fly — and time to <em>talk</em> to your drone. This simulator lets you control a virtual DJI Tello using either traditional joystick controls <strong>or AI natural language commands</strong>. Just type <em>"fly across the room and land on the desk"</em> and watch it happen. Practice in two immersive 3D scenarios — a school <strong>classroom</strong> for tight indoor manoeuvres, and a <strong>city scape</strong> for open-sky flying — all before you ever touch a real $200 Tello.</p>
+          <button class="launch-btn" data-launch="3">
+            <span>Launch Module</span>
+            <span class="arrow">→</span>
+          </button>
+        </div>
+        <div class="module-visual">
+          <!-- TELLO AI VISUAL: dual environments + AI command + flight path -->
+          <svg viewBox="0 0 320 240" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="env-bg" x1="0%" x2="100%" y1="0%" y2="0%">
+                <stop offset="0%" stop-color="#0a2515"/>
+                <stop offset="55%" stop-color="#0a1828"/>
+                <stop offset="100%" stop-color="#1a0e25"/>
+              </linearGradient>
+              <filter id="ai-glow"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            </defs>
+            <rect width="320" height="240" fill="url(#env-bg)"/>
+
+            <!-- HUD corner brackets -->
+            <g stroke="#00e676" stroke-width="1.6" fill="none" opacity="0.55">
+              <polyline points="10,10 10,24 24,24"/>
+              <polyline points="310,10 310,24 296,24"/>
+              <polyline points="10,230 10,216 24,216"/>
+              <polyline points="310,230 310,216 296,216"/>
+            </g>
+
+            <!-- ENV TOGGLE: classroom / city -->
+            <g transform="translate(20,32)">
+              <text x="0" y="0" fill="#00e676" font-family="monospace" font-size="6" opacity="0.8" font-weight="bold">ENV ▸</text>
+              <rect x="28" y="-7" width="120" height="13" rx="2" fill="rgba(0,230,118,0.05)" stroke="#00e676" stroke-width="0.6"/>
+              <rect x="29" y="-6" width="58" height="11" rx="1.5" fill="rgba(0,230,118,0.25)"/>
+              <text x="58" y="2" fill="#00e676" font-family="monospace" font-size="6.5" text-anchor="middle" font-weight="bold">⌂ CLASSROOM</text>
+              <text x="118" y="2" fill="#00e676" font-family="monospace" font-size="6.5" text-anchor="middle" opacity="0.5">▣ CITY SCAPE</text>
+            </g>
+
+            <!-- BAT indicator -->
+            <g transform="translate(238,32)">
+              <text x="0" y="0" fill="#00e676" font-family="monospace" font-size="6" opacity="0.85" font-weight="bold">BAT 92%</text>
+              <rect x="0" y="-7" width="60" height="9" rx="1" fill="none" stroke="#00e676" stroke-width="0.7" transform="translate(0,7)"/>
+              <rect x="1" y="1" width="55" height="6" rx="0.5" fill="#00e676" opacity="0.85"/>
+            </g>
+
+            <!-- AI command bubble -->
+            <g transform="translate(28,58)" filter="url(#ai-glow)">
+              <rect x="0" y="0" width="264" height="42" rx="6" fill="rgba(198,83,255,0.12)" stroke="#c653ff" stroke-width="1.3"/>
+              <!-- AI badge -->
+              <rect x="6" y="6" width="32" height="30" rx="4" fill="rgba(198,83,255,0.35)" stroke="#c653ff" stroke-width="0.8"/>
+              <text x="22" y="20" fill="#c653ff" font-family="monospace" font-size="7" text-anchor="middle" font-weight="bold">AI</text>
+              <text x="22" y="32" fill="#c653ff" font-family="monospace" font-size="11" text-anchor="middle">⚡</text>
+              <!-- prompt label -->
+              <text x="46" y="15" fill="#c653ff" font-family="monospace" font-size="6.5" opacity="0.75" font-weight="bold">▸ NATURAL LANGUAGE COMMAND</text>
+              <!-- typed text -->
+              <text x="46" y="31" fill="#fff" font-family="monospace" font-size="9" font-weight="500">"fly to the desk and land"</text>
+              <!-- typing cursor -->
+              <rect x="220" y="22" width="3" height="11" fill="#c653ff">
+                <animate attributeName="opacity" values="1;0;1" dur="0.8s" repeatCount="indefinite"/>
+              </rect>
+            </g>
+
+            <!-- AI flight path: curve from start to target -->
+            <path d="M 50 195 Q 100 175 160 145 Q 220 110 280 168"
+                  fill="none" stroke="#c653ff" stroke-width="1.4" stroke-dasharray="5 3" opacity="0.65"/>
+
+            <!-- START point -->
+            <g transform="translate(50,195)">
+              <circle r="5" fill="rgba(0,230,118,0.25)" stroke="#00e676" stroke-width="1.2"/>
+              <circle r="2" fill="#00e676"/>
+              <text x="0" y="16" fill="#00e676" font-family="monospace" font-size="6" text-anchor="middle" opacity="0.85" font-weight="bold">START</text>
+            </g>
+
+            <!-- DRONE in flight -->
+            <g filter="url(#ai-glow)" transform="translate(160,145)">
+              <line x1="0" y1="0" x2="-22" y2="-13" stroke="#00e676" stroke-width="2.4" stroke-linecap="round"/>
+              <line x1="0" y1="0" x2=" 22" y2="-13" stroke="#00e676" stroke-width="2.4" stroke-linecap="round"/>
+              <line x1="0" y1="0" x2="-22" y2=" 13" stroke="#00e676" stroke-width="2.4" stroke-linecap="round"/>
+              <line x1="0" y1="0" x2=" 22" y2=" 13" stroke="#00e676" stroke-width="2.4" stroke-linecap="round"/>
+              <ellipse class="rotor-spin" cx="-22" cy="-13" rx="11" ry="3.5" fill="none" stroke="#c653ff" stroke-width="1.6"/>
+              <ellipse class="rotor-spin" cx=" 22" cy="-13" rx="11" ry="3.5" fill="none" stroke="#c653ff" stroke-width="1.6"/>
+              <ellipse class="rotor-spin" cx="-22" cy=" 13" rx="11" ry="3.5" fill="none" stroke="#c653ff" stroke-width="1.6"/>
+              <ellipse class="rotor-spin" cx=" 22" cy=" 13" rx="11" ry="3.5" fill="none" stroke="#c653ff" stroke-width="1.6"/>
+              <rect x="-9" y="-7" width="18" height="14" rx="3" fill="#0b1425" stroke="#00e676" stroke-width="1.6"/>
+              <circle cx="0" cy="0" r="2.5" fill="#00e676"/>
+              <circle cx="-22" cy="-13" r="1.5" fill="#ff1744"/>
+              <circle cx=" 22" cy="-13" r="1.5" fill="#ffab00"/>
+            </g>
+
+            <!-- TARGET (desk) animated pulse -->
+            <g transform="translate(280,168)">
+              <circle r="4" fill="none" stroke="#c653ff" stroke-width="1.4">
+                <animate attributeName="r" values="4;10;4" dur="1.8s" repeatCount="indefinite"/>
+                <animate attributeName="opacity" values="1;0.15;1" dur="1.8s" repeatCount="indefinite"/>
+              </circle>
+              <circle r="3" fill="#c653ff"/>
+              <text x="0" y="16" fill="#c653ff" font-family="monospace" font-size="6" text-anchor="middle" font-weight="bold">DESK</text>
+            </g>
+
+            <!-- caption -->
+            <text x="160" y="227" text-anchor="middle" fill="#7b8cb0" font-family="monospace" font-size="9" letter-spacing="2">SPEAK · TYPE · FLY</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="module-body">
+        <div class="module-body-grid">
+          <div>
+            <div class="module-section-title">What You'll Practice</div>
+            <ul class="feature-list">
+              <li><strong>AI command mode</strong> — type plain English, drone obeys</li>
+              <li><strong>Two 3D worlds</strong> — classroom (indoor) &amp; city scape (outdoor)</li>
+              <li><strong>Manual flight</strong> — full stick &amp; throttle control</li>
+              <li><strong>Real Tello physics</strong> — same handling as the actual drone</li>
+              <li><strong>Pre-real-flight prep</strong> — confidence before live flight</li>
+            </ul>
+          </div>
+          <div>
+            <div class="module-section-title">Module Details</div>
+            <div class="info-row"><span class="info-row-label">Year Level</span><span class="info-row-value">8 – 12</span></div>
+            <div class="info-row"><span class="info-row-label">Difficulty</span><span class="info-row-value">All Levels</span></div>
+            <div class="info-row"><span class="info-row-label">Controls</span><span class="info-row-value">AI + Manual</span></div>
+            <div class="info-row"><span class="info-row-label">Environments</span><span class="info-row-value">Classroom + City</span></div>
+            <div class="info-row"><span class="info-row-label">Drone Model</span><span class="info-row-value">DJI Tello</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ FOOTER ═══ -->
+  <div class="footer">
+    <p>Built for digital technologies students by Clarence — interactive, ad-free, free for all educators</p>
+    <p class="brand">PLENTY VALLEY CHRISTIAN COLLEGE · DIGITAL TECHNOLOGIES</p>
+  </div>
+
+</div>
+
+<!-- ═══ IFRAME OVERLAY ═══ -->
+<div class="iframe-overlay" id="iframeOverlay">
+  <div class="iframe-bar">
+    <button class="iframe-back-btn" id="iframeBack" aria-label="Return to hub">
+      <span>←</span> <span>Back to Hub</span>
+    </button>
+    <div class="iframe-title">
+      <span class="iframe-title-tag">▶</span>
+      <span id="iframeTitle">Loading…</span>
+    </div>
+    <div class="iframe-pulse"></div>
+    <span class="iframe-status">LIVE</span>
+  </div>
+  <div class="iframe-loading" id="iframeLoading">
+    <div style="text-align:center;">
+      <div class="loading-drone">
+        <svg viewBox="0 0 130 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <line x1="65" y1="45" x2="22" y2="22" stroke="#00e5ff" stroke-width="3" stroke-linecap="round"/>
+          <line x1="65" y1="45" x2="108" y2="22" stroke="#00e5ff" stroke-width="3" stroke-linecap="round"/>
+          <line x1="65" y1="45" x2="22" y2="68" stroke="#00e5ff" stroke-width="3" stroke-linecap="round"/>
+          <line x1="65" y1="45" x2="108" y2="68" stroke="#00e5ff" stroke-width="3" stroke-linecap="round"/>
+          <ellipse class="rotor-spin" cx="22" cy="22" rx="15" ry="4" fill="none" stroke="#c653ff" stroke-width="2"/>
+          <ellipse class="rotor-spin" cx="108" cy="22" rx="15" ry="4" fill="none" stroke="#c653ff" stroke-width="2"/>
+          <ellipse class="rotor-spin" cx="22" cy="68" rx="15" ry="4" fill="none" stroke="#c653ff" stroke-width="2"/>
+          <ellipse class="rotor-spin" cx="108" cy="68" rx="15" ry="4" fill="none" stroke="#c653ff" stroke-width="2"/>
+          <rect x="52" y="33" width="26" height="22" rx="4" fill="#0b1425" stroke="#00e5ff" stroke-width="2"/>
+          <circle cx="65" cy="44" r="3" fill="#c653ff"/>
+        </svg>
+      </div>
+      <div class="loading-text">INITIALISING<span class="loading-dots"><span>.</span><span>.</span><span>.</span></span></div>
+    </div>
+  </div>
+  <iframe class="iframe-frame" id="iframeFrame" src="about:blank" title="Module content" allow="fullscreen; camera; microphone; gamepad; xr-spatial-tracking" allowfullscreen></iframe>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   ACCESSIBILITY — font scale + contrast
+   ═══════════════════════════════════════════════════════ */
+const SCALES = [0.85, 1.0, 1.15, 1.3, 1.5];
+let scaleIdx = 1;
+const root = document.documentElement;
+
+function applyScale() { root.style.setProperty('--fs', SCALES[scaleIdx]); }
+document.getElementById('fontDown').addEventListener('click', () => { if (scaleIdx > 0) { scaleIdx--; applyScale(); } });
+document.getElementById('fontUp').addEventListener('click', () => { if (scaleIdx < SCALES.length - 1) { scaleIdx++; applyScale(); } });
+document.getElementById('fontReset').addEventListener('click', () => { scaleIdx = 1; applyScale(); });
+const contrastBtn = document.getElementById('contrastToggle');
+contrastBtn.addEventListener('click', () => {
+  document.body.classList.toggle('high-contrast');
+  contrastBtn.classList.toggle('active');
+});
+
+/* ═══════════════════════════════════════════════════════
+   STAT COUNTERS — animate on view
+   ═══════════════════════════════════════════════════════ */
+const statCards = document.querySelectorAll('.stat-card');
+function animateCounter(el, target) {
+  const counter = el.querySelector('[data-counter]');
+  const duration = 1400;
+  const start = performance.now();
+  const isFloat = target % 1 !== 0;
+  function tick(now) {
+    const t = Math.min(1, (now - start) / duration);
+    const ease = 1 - Math.pow(1 - t, 3);
+    const val = target * ease;
+    counter.textContent = isFloat ? val.toFixed(1) : Math.floor(val);
+    if (t < 1) requestAnimationFrame(tick);
+    else counter.textContent = isFloat ? target.toFixed(1) : target;
+  }
+  requestAnimationFrame(tick);
+}
+const statObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const target = parseFloat(entry.target.dataset.target);
+      animateCounter(entry.target, target);
+      statObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.4 });
+statCards.forEach(c => statObserver.observe(c));
+
+/* ═══════════════════════════════════════════════════════
+   TAB SYSTEM
+   ═══════════════════════════════════════════════════════ */
+const tabBtns = document.querySelectorAll('.tab-btn');
+const tabPanels = document.querySelectorAll('.tab-panel');
+
+tabBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const idx = btn.dataset.tab;
+    tabBtns.forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected', 'false'); });
+    tabPanels.forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    btn.setAttribute('aria-selected', 'true');
+    document.querySelector(`.tab-panel[data-panel="${idx}"]`).classList.add('active');
+    // smooth scroll to tab content top
+    document.querySelector('.tab-bar').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+
+/* ═══════════════════════════════════════════════════════
+   IFRAME LAUNCH — URL hidden via inner data lookup
+   ═══════════════════════════════════════════════════════ */
+// Module URLs are kept here, never displayed in UI
+const MODULES = [
+  { embedded: 'drone-safety-content',                                        title: 'Drone Safety & Regulations' },
+  { url: 'droneblocks-sim-blocks.html',                                      title: 'Drone Blocks Studio — Block Edition' },
+  { url: 'droneblocks-sim-v2.html',                                          title: 'Drone Blocks Studio — Python Edition' },
+  { url: 'https://drone.teachingtools.dev/',                                 title: 'Tello Drone Flight Simulator' }
+];
+
+const overlay = document.getElementById('iframeOverlay');
+const iframe = document.getElementById('iframeFrame');
+const iframeTitle = document.getElementById('iframeTitle');
+const iframeLoading = document.getElementById('iframeLoading');
+const iframeBack = document.getElementById('iframeBack');
+
+document.querySelectorAll('.launch-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const idx = parseInt(btn.dataset.launch, 10);
+    const mod = MODULES[idx];
+    iframeTitle.textContent = mod.title;
+    iframeLoading.classList.remove('hidden');
+    if (mod.embedded) {
+      // Embedded module — read inert script content, restore the close tag, load via srcdoc
+      const tpl = document.getElementById(mod.embedded);
+      const closeTag  = '</' + 'script>';
+      const escapedTag = '<\\/' + 'script>';
+      const html = tpl.textContent.split(escapedTag).join(closeTag);
+      iframe.removeAttribute('src');
+      iframe.srcdoc = html;
+    } else {
+      iframe.removeAttribute('srcdoc');
+      iframe.src = mod.url;
+    }
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  });
+});
+
+iframe.addEventListener('load', () => {
+  // small delay so loader doesn't flash for cached pages
+  setTimeout(() => iframeLoading.classList.add('hidden'), 250);
+});
+
+function closeOverlay() {
+  overlay.classList.remove('active');
+  iframe.removeAttribute('srcdoc');
+  iframe.src = 'about:blank';
+  iframeLoading.classList.remove('hidden');
+  document.body.style.overflow = '';
+}
+iframeBack.addEventListener('click', closeOverlay);
+
+// ESC key closes the overlay
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && overlay.classList.contains('active')) closeOverlay();
+});
+</script>
+<script id="drone-safety-content" type="text/html">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drone Safety — Year 9 Digital Technologies</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=JetBrains+Mono:wght@300;400;500;600&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ── colour system ── */
+    --bg-deep:     #050a14;
+    --bg-panel:    #080f1e;
+    --bg-card:     #0b1425;
+    --bg-card-2:   #0e1a2e;
+    --cyan:        #00e5ff;
+    --cyan-dim:    #00b8d4;
+    --purple:      #c653ff;
+    --purple-dim:  #9c27b0;
+    --amber:       #ffab00;
+    --green:       #00e676;
+    --red:         #ff1744;
+    --text-main:   #ccd6f6;
+    --text-muted:  #7b8cb0;
+    --border:      rgba(0,229,255,0.18);
+    --glow-cyan:   0 0 18px rgba(0,229,255,0.45), 0 0 40px rgba(0,229,255,0.15);
+    --glow-purple: 0 0 18px rgba(198,83,255,0.45), 0 0 40px rgba(198,83,255,0.15);
+    --glow-green:  0 0 18px rgba(0,230,118,0.45);
+    --glow-red:    0 0 18px rgba(255,23,68,0.5);
+
+    /* ── font scale (controlled by accessibility buttons) ── */
+    --fs: 1;
+  }
+
+  /* high-contrast mode overrides */
+  body.high-contrast {
+    --bg-deep:    #000000;
+    --bg-panel:   #050505;
+    --bg-card:    #0a0a0a;
+    --bg-card-2:  #111111;
+    --cyan:       #00ffff;
+    --purple:     #ff66ff;
+    --amber:      #ffd700;
+    --green:      #00ff66;
+    --text-main:  #ffffff;
+    --text-muted: #cccccc;
+    --border:     rgba(0,255,255,0.45);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg-deep);
+    color: var(--text-main);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: calc(14.5px * var(--fs));
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
+    transition: background 0.3s, color 0.3s;
+  }
+
+  /* grid lines background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* scan line */
+  .scanline {
+    position: fixed; top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+    animation: scan 6s linear infinite;
+    opacity: 0.5;
+    z-index: 90;
+    pointer-events: none;
+  }
+  @keyframes scan { 0% { top: 0; } 100% { top: 100vh; } }
+
+  /* ═══════════════════════════════════════════════════════
+     ACCESSIBILITY PANEL — sticky top-right
+     ═══════════════════════════════════════════════════════ */
+  .a11y-panel {
+    position: fixed;
+    top: 14px; right: 14px;
+    z-index: 200;
+    background: rgba(8,15,30,0.95);
+    backdrop-filter: blur(8px);
+    border: 1.5px solid var(--cyan);
+    border-radius: 8px;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 4px 20px rgba(0,229,255,0.15);
+    animation: fadeIn 0.6s ease 0.2s both;
+  }
+
+  .a11y-label {
+    font-family: 'Orbitron', sans-serif;
+    font-size: calc(8px * var(--fs));
+    color: var(--cyan);
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    padding: 0 6px 0 4px;
+    border-right: 1px solid rgba(0,229,255,0.25);
+    margin-right: 2px;
+  }
+
+  .a11y-btn {
+    background: transparent;
+    border: 1px solid rgba(0,229,255,0.3);
+    color: var(--cyan);
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: calc(11px * var(--fs));
+    width: 32px; height: 28px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .a11y-btn:hover {
+    background: var(--cyan);
+    color: var(--bg-deep);
+    box-shadow: var(--glow-cyan);
+  }
+  .a11y-btn.active {
+    background: var(--cyan);
+    color: var(--bg-deep);
+  }
+  .a11y-btn.small { font-size: calc(9px * var(--fs)); }
+  .a11y-btn.large { font-size: calc(14px * var(--fs)); }
+  .a11y-btn.contrast { width: auto; padding: 0 8px; font-size: calc(9px * var(--fs)); letter-spacing: 0.5px; }
+
+  /* progress bar */
+  .progress-strip {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: rgba(0,229,255,0.08);
+    z-index: 100;
+  }
+  .progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--cyan), var(--purple));
+    box-shadow: var(--glow-cyan);
+    transition: width 0.3s;
+  }
+
+  /* layout */
+  .page-wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 50px 22px 60px;
+  }
+
+  /* header */
+  .header {
+    text-align: center;
+    margin-bottom: 36px;
+    animation: fadeDown 0.7s ease both;
+    position: relative;
+  }
+
+  .hero-drone {
+    width: 120px; height: 80px;
+    margin: 0 auto 14px;
+    position: relative;
+    animation: hover-float 3.2s ease-in-out infinite;
+  }
+
+  .hero-drone svg { width: 100%; height: 100%; filter: drop-shadow(0 0 14px var(--cyan)); }
+
+  .rotor-spin { animation: rotor-blur 0.18s linear infinite; transform-origin: center; transform-box: fill-box; }
+
+  @keyframes rotor-blur {
+    from { transform: scaleX(1); }
+    50%  { transform: scaleX(0.06); }
+    to   { transform: scaleX(1); }
+  }
+
+  @keyframes hover-float {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(-10px); }
+  }
+
+  .subject-tag {
+    font-size: calc(10px * var(--fs));
+    letter-spacing: 3px;
+    color: var(--cyan);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    opacity: 0.85;
+  }
+
+  .header h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: calc(32px * var(--fs));
+    font-weight: 900;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    line-height: 1.1;
+    text-shadow: var(--glow-cyan);
+  }
+  .header h1 span { color: var(--cyan); }
+
+  .header-sub {
+    font-size: calc(11px * var(--fs));
+    color: var(--text-muted);
+    margin-top: 8px;
+    letter-spacing: 1px;
+  }
+
+  /* vital stats bar */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin: 28px 0 38px;
+    animation: fadeUp 0.8s ease 0.2s both;
+  }
+  @media (max-width: 600px) {
+    .stats-bar { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 12px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+  }
+  .stat-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--cyan);
+    box-shadow: var(--glow-cyan);
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--cyan);
+  }
+  .stat-card.purple::before { background: var(--purple); }
+  .stat-card.amber::before  { background: var(--amber); }
+  .stat-card.green::before  { background: var(--green); }
+
+  .stat-num {
+    font-family: 'Orbitron', sans-serif;
+    font-size: calc(28px * var(--fs));
+    font-weight: 900;
+    color: var(--cyan);
+    line-height: 1;
+    text-shadow: 0 0 12px rgba(0,229,255,0.4);
+  }
+  .stat-card.purple .stat-num { color: var(--purple); text-shadow: 0 0 12px rgba(198,83,255,0.4); }
+  .stat-card.amber  .stat-num { color: var(--amber);  text-shadow: 0 0 12px rgba(255,171,0,0.4); }
+  .stat-card.green  .stat-num { color: var(--green);  text-shadow: 0 0 12px rgba(0,230,118,0.4); }
+
+  .stat-unit {
+    font-family: 'Orbitron', sans-serif;
+    font-size: calc(11px * var(--fs));
+    color: var(--cyan);
+    margin-left: 2px;
+  }
+  .stat-card.purple .stat-unit { color: var(--purple); }
+  .stat-card.amber  .stat-unit { color: var(--amber); }
+  .stat-card.green  .stat-unit { color: var(--green); }
+
+  .stat-label {
+    font-size: calc(9.5px * var(--fs));
+    color: var(--text-muted);
+    margin-top: 6px;
+    letter-spacing: 0.8px;
+    line-height: 1.4;
+  }
+
+  /* sections / panels */
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--cyan), var(--purple), transparent);
+    margin: 26px 0;
+    opacity: 0.4;
+  }
+
+  .section { margin-bottom: 38px; animation: fadeUp 0.6s ease both; }
+
+  .section-header {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 16px; flex-wrap: wrap;
+  }
+
+  .step-badge {
+    font-family: 'Orbitron', sans-serif;
+    font-size: calc(11px * var(--fs));
+    font-weight: 700;
+    padding: 5px 11px;
+    border-radius: 3px;
+    letter-spacing: 1.5px;
+    flex-shrink: 0;
+  }
+  .step-badge.cyan   { background: rgba(0,229,255,0.12); color: var(--cyan);   border: 1px solid rgba(0,229,255,0.3); }
+  .step-badge.purple { background: rgba(198,83,255,0.12); color: var(--purple); border: 1px solid rgba(198,83,255,0.3); }
+  .step-badge.amber  { background: rgba(255,171,0,0.12); color: var(--amber);  border: 1px solid rgba(255,171,0,0.3); }
+  .step-badge.green  { background: rgba(0,230,118,0.12); color: var(--green);  border: 1px solid rgba(0,230,118,0.3); }
+
+  .section-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: calc(15px * var(--fs));
+    font-weight: 700;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+  }
+
+  .panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px 22px;
+    position: relative;
+    overflow: hidden;
+  }
+  .panel::before {
+    content: ''; position: absolute; top: 0; left: 0;
+    width: 3px; height: 100%; border-radius: 6px 0 0 6px;
+  }
+  .panel.accent-cyan::before   { background: var(--cyan);   box-shadow: var(--glow-cyan); }
+  .panel.accent-purple::before { background: var(--purple); box-shadow: var(--glow-purple); }
+  .panel.accent-amber::before  { background: var(--amber);  box-shadow: 0 0 18px rgba(255,171,0,0.45); }
+  .panel.accent-green::before  { background: var(--green);  box-shadow: 0 0 18px rgba(0,230,118,0.45); }
+
+  .panel p, .panel li {
+    font-size: calc(13px * var(--fs));
+    line-height: 1.7;
+    color: var(--text-main);
+  }
+  .panel p + p { margin-top: 10px; }
+
+  /* video grid */
+  .video-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-top: 14px;
+  }
+  @media (max-width: 600px) { .video-grid { grid-template-columns: 1fr; } }
+
+  .video-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    transition: border-color 0.3s, box-shadow 0.3s, transform 0.2s;
+    text-decoration: none;
+    display: block;
+    cursor: pointer;
+  }
+  .video-card:hover { border-color: var(--cyan); box-shadow: var(--glow-cyan); transform: translateY(-2px); }
+  .video-card:hover .thumb-overlay { opacity: 1; }
+  .video-card:hover .play-ring { transform: scale(1.12); }
+
+  .thumb-wrap { width: 100%; aspect-ratio: 16/9; display: block; position: relative; overflow: hidden; }
+  .thumb-wrap svg { width: 100%; height: 100%; display: block; }
+
+  .thumb-overlay {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(5,10,20,0.5);
+    opacity: 0; transition: opacity 0.25s;
+  }
+
+  .play-ring {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    border: 2.5px solid var(--cyan);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: var(--glow-cyan);
+    transition: transform 0.2s;
+    background: rgba(0,229,255,0.12);
+  }
+
+  .video-label {
+    font-family: 'Orbitron', sans-serif;
+    font-size: calc(10px * var(--fs));
+    font-weight: 600;
+    color: var(--cyan);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 8px 12px;
+    background: rgba(0,229,255,0.05);
+    border-top: 1px solid rgba(0,229,255,0.1);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .video-label span { color: var(--text-muted); font-size: calc(9px * var(--fs)); }
+
+  /* links & tips */
+  .cyber-link {
+    color: var(--cyan); text-decoration: none; font-weight: 500;
+    border-bottom: 1px solid rgba(0,229,255,0.3);
+    transition: color 0.2s, border-color 0.2s, text-shadow 0.2s;
+    word-break: break-all;
+  }
+  .cyber-link:hover { color: #fff; border-color: var(--cyan); text-shadow: var(--glow-cyan); }
+  .cyber-link.purple { color: var(--purple); border-color: rgba(198,83,255,0.3); }
+  .cyber-link.purple:hover { color: #fff; border-color: var(--purple); text-shadow: var(--glow-purple); }
+
+  .tip-box {
+    background: rgba(255,171,0,0.06);
+    border: 1px solid rgba(255,171,0,0.25);
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin-top: 12px;
+    display: flex; gap: 10px; align-items: flex-start;
+  }
+  .tip-icon { font-size: calc(18px * var(--fs)); flex-shrink: 0; }
+  .tip-box p { font-size: calc(12px * var(--fs)); color: #c8a84b; line-height: 1.6; }
+
+  /* lab header */
+  .lab-header {
+    background: linear-gradient(135deg, rgba(0,229,255,0.08) 0%, rgba(198,83,255,0.08) 100%);
+    border: 1px solid rgba(0,229,255,0.25);
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin-bottom: 22px;
+    position: relative;
+    overflow: hidden;
+  }
+  .lab-header::before {
+    content: '⚡ INTERACTIVE LAB';
+    font-family: 'Orbitron', sans-serif;
+    font-size: calc(10px * var(--fs));
+    font-weight: 700;
+    color: var(--cyan);
+    letter-spacing: 2px;
+    display: block;
+    margin-bottom: 4px;
+  }
+  .lab-header h2 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: calc(18px * var(--fs));
+    color: #fff;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .lab-header p {
+    font-size: calc(12.5px * var(--fs));
+    color: var(--text-main);
+    line-height: 1.65;
+  }
+
+  /* widget base */
+  .widget {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 22px;
+    margin-bottom: 18px;
+    position: relative;
+  }
+  .widget-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: calc(14px * var(--fs));
+    font-weight: 700;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    margin-bottom: 6px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .widget-icon {
+    width: 28px; height: 28px;
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: calc(15px * var(--fs));
+  }
+  .widget-icon.cyan   { background: rgba(0,229,255,0.15); color: var(--cyan); border: 1px solid rgba(0,229,255,0.3); }
+  .widget-icon.purple { background: rgba(198,83,255,0.15); color: var(--purple); border: 1px solid rgba(198,83,255,0.3); }
+  .widget-icon.amber  { background: rgba(255,171,0,0.15); color: var(--amber); border: 1px solid rgba(255,171,0,0.3); }
+  .widget-icon.green  { background: rgba(0,230,118,0.15); color: var(--green); border: 1px solid rgba(0,230,118,0.3); }
+  .widget-desc {
+    font-size: calc(12px * var(--fs));
+    color: var(--text-muted);
+    margin-bottom: 18px;
+    line-height: 1.6;
+  }
+
+  /* altitude simulator */
+  .alt-stage {
+    width: 100%;
+    height: 280px;
+    background: linear-gradient(180deg, #050a14 0%, #0a1828 60%, #0d1f2c 100%);
+    border-radius: 6px;
+    border: 1px solid rgba(0,229,255,0.2);
+    position: relative;
+    overflow: hidden;
+  }
+  .alt-stage svg { width: 100%; height: 100%; }
+  .alt-controls {
+    margin-top: 14px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .slider-row {
+    display: flex; align-items: center; gap: 14px;
+  }
+  .slider-label {
+    font-family: 'Orbitron', sans-serif;
+    font-size: calc(10px * var(--fs));
+    color: var(--cyan);
+    letter-spacing: 1.5px;
+    flex-shrink: 0;
+  }
+  .cyber-slider {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    background: rgba(0,229,255,0.2);
+    border-radius: 2px;
+    outline: none;
+  }
+  .cyber-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px; height: 18px;
+    background: var(--cyan);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: var(--glow-cyan);
+    border: 2px solid var(--bg-deep);
+  }
+  .cyber-slider::-moz-range-thumb {
+    width: 18px; height: 18px;
+    background: var(--cyan);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid var(--bg-deep);
+  }
+  .alt-readout {
+    font-family: 'Orbitron', sans-serif;
+    font-size: calc(15px * var(--fs));
+    font-weight: 900;
+    color: var(--cyan);
+    min-width: 70px;
+    text-align: right;
+  }
+  .alt-status {
+    text-align: center;
+    padding: 10px 14px;
+    border-radius: 5px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: calc(11px * var(--fs));
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    transition: all 0.3s;
+  }
+  .alt-status.safe    { background: rgba(0,230,118,0.12); color: var(--green); border: 1px solid rgba(0,230,118,0.4); }
+  .alt-status.warning { background: rgba(255,171,0,0.12); color: var(--amber); border: 1px solid rgba(255,171,0,0.4); }
+  .alt-status.danger  { background: rgba(255,23,68,0.15); color: var(--red); border: 1px solid rgba(255,23,68,0.5); animation: pulse-danger 1.2s ease-in-out infinite; }
+  @keyframes pulse-danger {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255,23,68,0.4); }
+    50%       { box-shadow: 0 0 0 6px rgba(255,23,68,0); }
+  }
+
+  /* distance challenge */
+  .dist-stage {
+    width: 100%;
+    height: 280px;
+    background: radial-gradient(circle at 50% 60%, #0a1f15 0%, #050a14 80%);
+    border-radius: 6px;
+    border: 1px solid rgba(0,230,118,0.2);
+    position: relative;
+    overflow: hidden;
+  }
+  .dist-stage svg { width: 100%; height: 100%; }
+  .dist-readout-row {
+    display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap;
+  }
+  .dist-readout {
+    flex: 1;
+    min-width: 130px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 10px 12px;
+  }
+  .dist-readout-label {
+    font-family: 'Orbitron', sans-serif;
+    font-size: calc(9px * var(--fs));
+    color: var(--text-muted);
+    letter-spacing: 1.5px;
+    margin-bottom: 4px;
+  }
+  .dist-readout-value {
+    font-family: 'Orbitron', sans-serif;
+    font-size: calc(18px * var(--fs));
+    font-weight: 900;
+    color: var(--cyan);
+  }
+  .dist-readout-value.safe   { color: var(--green); }
+  .dist-readout-value.danger { color: var(--red); }
+
+  /* scenarios */
+  .scen-stats {
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 10px 16px;
+    margin-bottom: 14px;
+  }
+  .scen-stats span {
+    font-family: 'Orbitron', sans-serif;
+    font-size: calc(10px * var(--fs));
+    letter-spacing: 1px;
+    color: var(--text-muted);
+  }
+  .scen-score {
+    font-family: 'Orbitron', sans-serif;
+    font-size: calc(14px * var(--fs));
+    font-weight: 900;
+    color: var(--purple);
+  }
+
+  .scen-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  @media (max-width: 600px) { .scen-grid { grid-template-columns: 1fr; } }
+
+  .scen-card {
+    background: var(--bg-panel);
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    transition: all 0.3s;
+    position: relative;
+  }
+  .scen-card.locked { opacity: 0.65; pointer-events: none; }
+  .scen-card.correct { border-color: var(--green); box-shadow: var(--glow-green); }
+  .scen-card.wrong   { border-color: var(--red); box-shadow: var(--glow-red); }
+
+  .scen-img {
+    width: 100%;
+    aspect-ratio: 2/1;
+    background: var(--bg-deep);
+    position: relative;
+    overflow: hidden;
+  }
+  .scen-img svg { width: 100%; height: 100%; display: block; }
+
+  .scen-body { padding: 12px 14px; }
+
+  .scen-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: calc(12px * var(--fs));
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 4px;
+    letter-spacing: 0.5px;
+  }
+  .scen-q {
+    font-size: calc(11.5px * var(--fs));
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    line-height: 1.5;
+  }
+  .scen-btns { display: flex; gap: 8px; }
+
+  .scen-btn {
+    flex: 1;
+    background: transparent;
+    border: 1.5px solid;
+    padding: 7px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Orbitron', sans-serif;
+    font-size: calc(11px * var(--fs));
+    font-weight: 700;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+  }
+  .scen-btn.yes { border-color: rgba(0,230,118,0.5); color: var(--green); }
+  .scen-btn.yes:hover { background: var(--green); color: var(--bg-deep); box-shadow: var(--glow-green); }
+  .scen-btn.no  { border-color: rgba(255,23,68,0.5); color: var(--red); }
+  .scen-btn.no:hover { background: var(--red); color: #fff; box-shadow: var(--glow-red); }
+
+  .scen-feedback {
+    margin-top: 10px;
+    padding: 8px 11px;
+    border-radius: 4px;
+    font-size: calc(11px * var(--fs));
+    line-height: 1.5;
+    display: none;
+  }
+  .scen-feedback.correct { background: rgba(0,230,118,0.1); border: 1px solid rgba(0,230,118,0.3); color: var(--green); }
+  .scen-feedback.wrong   { background: rgba(255,23,68,0.1); border: 1px solid rgba(255,23,68,0.3); color: #ff6b8a; }
+  .scen-feedback.show { display: block; animation: slideDown 0.3s ease; }
+
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .scen-reset {
+    margin-top: 14px;
+    background: transparent;
+    border: 1px solid rgba(198,83,255,0.4);
+    color: var(--purple);
+    font-family: 'Orbitron', sans-serif;
+    font-size: calc(10px * var(--fs));
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    padding: 8px 18px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .scen-reset:hover { background: var(--purple); color: #fff; box-shadow: var(--glow-purple); }
+
+  /* checklist */
+  .check-grid { display: grid; gap: 10px; }
+  .check-item {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--bg-panel);
+    border: 1.5px solid var(--border);
+    border-radius: 5px;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: all 0.25s;
+  }
+  .check-item:hover { border-color: var(--cyan); }
+  .check-item.checked {
+    background: rgba(0,230,118,0.08);
+    border-color: rgba(0,230,118,0.5);
+  }
+
+  .check-box {
+    width: 22px; height: 22px;
+    border: 2px solid var(--cyan);
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.25s;
+    background: var(--bg-deep);
+  }
+  .check-item.checked .check-box {
+    background: var(--green);
+    border-color: var(--green);
+    box-shadow: 0 0 12px rgba(0,230,118,0.5);
+  }
+  .check-box::after {
+    content: '✓';
+    color: var(--bg-deep);
+    font-weight: 900;
+    font-size: calc(14px * var(--fs));
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .check-item.checked .check-box::after { opacity: 1; }
+
+  .check-text {
+    font-size: calc(12.5px * var(--fs));
+    color: var(--text-main);
+    flex: 1;
+  }
+  .check-icon { font-size: calc(20px * var(--fs)); flex-shrink: 0; }
+
+  .ready-status {
+    margin-top: 16px;
+    padding: 14px;
+    border-radius: 6px;
+    text-align: center;
+    font-family: 'Orbitron', sans-serif;
+    font-size: calc(13px * var(--fs));
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    transition: all 0.4s;
+    background: rgba(255,171,0,0.1);
+    color: var(--amber);
+    border: 1.5px solid rgba(255,171,0,0.4);
+  }
+  .ready-status.go {
+    background: rgba(0,230,118,0.15);
+    color: var(--green);
+    border-color: var(--green);
+    box-shadow: var(--glow-green);
+    animation: pulse-go 2s ease-in-out infinite;
+  }
+  @keyframes pulse-go {
+    0%, 100% { box-shadow: 0 0 18px rgba(0,230,118,0.3); }
+    50%       { box-shadow: 0 0 28px rgba(0,230,118,0.6); }
+  }
+
+  /* CTA / quiz */
+  .cta-block {
+    background: linear-gradient(135deg, rgba(0,229,255,0.08) 0%, rgba(198,83,255,0.08) 100%);
+    border: 1px solid rgba(0,229,255,0.25);
+    border-radius: 8px;
+    padding: 26px 28px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .cta-block::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--cyan), var(--purple));
+    opacity: 0.7;
+  }
+  .cta-block p {
+    font-size: calc(13px * var(--fs));
+    color: var(--text-main);
+    margin-bottom: 16px;
+    line-height: 1.7;
+  }
+  .cta-btn {
+    display: inline-block;
+    font-family: 'Orbitron', sans-serif;
+    font-size: calc(12px * var(--fs));
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--bg-deep);
+    background: var(--cyan);
+    padding: 12px 28px;
+    border-radius: 4px;
+    text-decoration: none;
+    box-shadow: var(--glow-cyan);
+    transition: all 0.25s;
+  }
+  .cta-btn:hover {
+    background: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 0 28px rgba(0,229,255,0.7);
+  }
+
+  .quiz-callout {
+    background: linear-gradient(135deg, rgba(198,83,255,0.07) 0%, rgba(0,229,255,0.04) 100%);
+    border: 1px solid rgba(198,83,255,0.3);
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 16px;
+  }
+  .quiz-callout-header {
+    font-family: 'Orbitron', sans-serif;
+    font-size: calc(11px * var(--fs));
+    font-weight: 700;
+    color: var(--purple);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .quiz-callout p { font-size: calc(12.5px * var(--fs)); color: var(--text-main); line-height: 1.6; }
+  .score-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(0,230,118,0.1);
+    border: 1px solid rgba(0,230,118,0.3);
+    border-radius: 3px;
+    padding: 4px 11px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: calc(10.5px * var(--fs));
+    font-weight: 700;
+    color: var(--green);
+    margin-top: 10px;
+  }
+
+  /* footer */
+  .footer {
+    text-align: center;
+    margin-top: 50px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(0,229,255,0.1);
+  }
+  .footer p { font-size: calc(10.5px * var(--fs)); color: var(--text-muted); letter-spacing: 1px; }
+  .footer .pvcc {
+    font-family: 'Orbitron', sans-serif;
+    font-size: calc(10.5px * var(--fs));
+    color: var(--cyan);
+    opacity: 0.7;
+    margin-top: 4px;
+  }
+
+  /* animations */
+  @keyframes fadeIn   { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes fadeDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeUp   { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* mobile tweaks */
+  @media (max-width: 540px) {
+    .a11y-panel { top: 10px; right: 10px; padding: 6px; }
+    .a11y-label { display: none; }
+    .page-wrap { padding: 50px 14px 50px; }
+    .header h1 { font-size: calc(24px * var(--fs)); }
+    .alt-stage, .dist-stage { height: 230px; }
+  }
+
+  /* reduce motion */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="scanline"></div>
+<div class="progress-strip"><div class="progress-fill" id="progressFill"></div></div>
+
+<div class="a11y-panel" role="toolbar" aria-label="Display options">
+  <div class="a11y-label">A11Y</div>
+  <button class="a11y-btn small"  id="fontDown" title="Smaller text"  aria-label="Decrease font size">A−</button>
+  <button class="a11y-btn"        id="fontReset" title="Reset text size" aria-label="Reset font size">A</button>
+  <button class="a11y-btn large"  id="fontUp"   title="Larger text"   aria-label="Increase font size">A+</button>
+  <button class="a11y-btn contrast" id="contrastToggle" title="High contrast" aria-label="Toggle high contrast">◐ HC</button>
+</div>
+
+<div class="page-wrap">
+
+  <div class="header">
+    <div class="hero-drone">
+      <svg viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <line x1="60" y1="40" x2="20" y2="20" stroke="#00e5ff" stroke-width="2.8" stroke-linecap="round"/>
+        <line x1="60" y1="40" x2="100" y2="20" stroke="#00e5ff" stroke-width="2.8" stroke-linecap="round"/>
+        <line x1="60" y1="40" x2="20" y2="60" stroke="#00e5ff" stroke-width="2.8" stroke-linecap="round"/>
+        <line x1="60" y1="40" x2="100" y2="60" stroke="#00e5ff" stroke-width="2.8" stroke-linecap="round"/>
+        <ellipse class="rotor-spin" cx="20"  cy="20" rx="14" ry="4" fill="none" stroke="#c653ff" stroke-width="1.8"/>
+        <ellipse class="rotor-spin" cx="100" cy="20" rx="14" ry="4" fill="none" stroke="#c653ff" stroke-width="1.8"/>
+        <ellipse class="rotor-spin" cx="20"  cy="60" rx="14" ry="4" fill="none" stroke="#c653ff" stroke-width="1.8"/>
+        <ellipse class="rotor-spin" cx="100" cy="60" rx="14" ry="4" fill="none" stroke="#c653ff" stroke-width="1.8"/>
+        <rect x="48" y="30" width="24" height="20" rx="4" fill="#0b1425" stroke="#00e5ff" stroke-width="2"/>
+        <circle cx="60" cy="54" r="4" fill="#00e5ff" opacity="0.85"/>
+        <circle cx="60" cy="40" r="3" fill="#c653ff"/>
+        <circle cx="20"  cy="20" r="2.5" fill="#ff1744"/>
+        <circle cx="100" cy="20" r="2.5" fill="#00e676"/>
+      </svg>
+    </div>
+    <div class="subject-tag">// Year 9 Digital Technologies //</div>
+    <h1>Drone <span>Safety</span> &amp; Regulations</h1>
+    <div class="header-sub">CASA Know Your Drone — Australian Aviation Safety</div>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat-card" data-target="120" data-suffix="m">
+      <div><span class="stat-num" data-counter>0</span><span class="stat-unit">m</span></div>
+      <div class="stat-label">MAX FLIGHT ALTITUDE</div>
+    </div>
+    <div class="stat-card purple" data-target="30" data-suffix="m">
+      <div><span class="stat-num" data-counter>0</span><span class="stat-unit">m</span></div>
+      <div class="stat-label">FROM PEOPLE &amp; PROPERTY</div>
+    </div>
+    <div class="stat-card amber" data-target="5.5" data-suffix="km">
+      <div><span class="stat-num" data-counter>0</span><span class="stat-unit">km</span></div>
+      <div class="stat-label">FROM AIRPORTS &amp; HELIPADS</div>
+    </div>
+    <div class="stat-card green" data-target="1" data-suffix="">
+      <div><span class="stat-num" data-counter>0</span><span class="stat-unit">drone</span></div>
+      <div class="stat-label">PER PILOT, AT A TIME</div>
+    </div>
+  </div>
+
+  <div class="section" data-step="1">
+    <div class="section-header">
+      <div class="step-badge cyan">STEP 01</div>
+      <div class="section-title">Watch the Safety Videos</div>
+    </div>
+
+    <div class="panel accent-cyan">
+      <p>Watch all four CASA drone safety videos below. Pay close attention — the content will help you complete the interactive challenges and the final quiz. Use the note-taking sheet in Step 2 while you watch.</p>
+    </div>
+
+    <div class="video-grid">
+
+      <a class="video-card" href="https://vimeo.com/673445733/18d4af14cd" target="_blank" rel="noopener">
+        <div class="thumb-wrap">
+          <svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <radialGradient id="sky1" cx="50%" cy="40%" r="60%">
+                <stop offset="0%" stop-color="#0d1f3c"/>
+                <stop offset="100%" stop-color="#050a14"/>
+              </radialGradient>
+              <filter id="glow1"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            </defs>
+            <rect width="320" height="180" fill="url(#sky1)"/>
+            <g opacity="0.18" stroke="#00e5ff" stroke-width="0.5">
+              <line x1="0" y1="120" x2="320" y2="80"/>
+              <line x1="0" y1="140" x2="320" y2="100"/>
+              <line x1="0" y1="160" x2="320" y2="120"/>
+              <line x1="40" y1="180" x2="140" y2="60"/>
+              <line x1="100" y1="180" x2="200" y2="60"/>
+              <line x1="160" y1="180" x2="260" y2="60"/>
+              <line x1="220" y1="180" x2="320" y2="60"/>
+            </g>
+            <g fill="#070d1a">
+              <rect x="0"   y="130" width="30" height="50"/>
+              <rect x="35"  y="110" width="25" height="70"/>
+              <rect x="65"  y="120" width="20" height="60"/>
+              <rect x="240" y="105" width="28" height="75"/>
+              <rect x="272" y="118" width="22" height="62"/>
+              <rect x="296" y="130" width="24" height="50"/>
+            </g>
+            <g fill="#00e5ff" opacity="0.35">
+              <rect x="4"  y="135" width="4" height="3"/><rect x="10" y="135" width="4" height="3"/>
+              <rect x="40" y="115" width="4" height="3"/><rect x="47" y="115" width="4" height="3"/>
+              <rect x="245" y="110" width="4" height="3"/><rect x="252" y="110" width="4" height="3"/>
+            </g>
+            <line x1="0" y1="72" x2="320" y2="72" stroke="#00e5ff" stroke-width="0.6" stroke-dasharray="6 4" opacity="0.4"/>
+            <text x="8" y="68" fill="#00e5ff" font-size="7" font-family="monospace" opacity="0.6">120m MAX ALTITUDE</text>
+            <g fill="#fff" opacity="0.5">
+              <circle cx="30" cy="20" r="1"/><circle cx="80" cy="12" r="0.8"/>
+              <circle cx="150" cy="8" r="1"/><circle cx="280" cy="10" r="1"/>
+            </g>
+            <g filter="url(#glow1)" transform="translate(160,62)">
+              <line x1="0" y1="0" x2="-28" y2="-16" stroke="#00e5ff" stroke-width="2" stroke-linecap="round"/>
+              <line x1="0" y1="0" x2=" 28" y2="-16" stroke="#00e5ff" stroke-width="2" stroke-linecap="round"/>
+              <line x1="0" y1="0" x2="-28" y2=" 16" stroke="#00e5ff" stroke-width="2" stroke-linecap="round"/>
+              <line x1="0" y1="0" x2=" 28" y2=" 16" stroke="#00e5ff" stroke-width="2" stroke-linecap="round"/>
+              <ellipse cx="-28" cy="-16" rx="14" ry="4" fill="none" stroke="#c653ff" stroke-width="1.5"/>
+              <ellipse cx=" 28" cy="-16" rx="14" ry="4" fill="none" stroke="#c653ff" stroke-width="1.5"/>
+              <ellipse cx="-28" cy=" 16" rx="14" ry="4" fill="none" stroke="#c653ff" stroke-width="1.5"/>
+              <ellipse cx=" 28" cy=" 16" rx="14" ry="4" fill="none" stroke="#c653ff" stroke-width="1.5"/>
+              <rect x="-10" y="-8" width="20" height="16" rx="3" fill="#0b1425" stroke="#00e5ff" stroke-width="1.5"/>
+              <circle cx="0" cy="10" r="3.5" fill="#050a14" stroke="#00e5ff" stroke-width="1"/>
+              <circle cx="0" cy="0" r="2.5" fill="#c653ff"/>
+              <circle cx="-28" cy="-16" r="2" fill="#ff1744"/>
+              <circle cx=" 28" cy="-16" r="2" fill="#00e676"/>
+            </g>
+            <text x="160" y="168" text-anchor="middle" fill="#7b8cb0" font-size="8" font-family="monospace">ALTITUDE LIMITS // RULES OF THE AIR</text>
+          </svg>
+          <div class="thumb-overlay"><div class="play-ring"><svg viewBox="0 0 20 20"><polygon points="5,3 17,10 5,17" fill="#00e5ff"/></svg></div></div>
+        </div>
+        <div class="video-label">▶ &nbsp;Video 1 <span>CLICK TO OPEN ↗</span></div>
+      </a>
+
+      <a class="video-card" href="https://vimeo.com/673445607/73ce8fb2fd" target="_blank" rel="noopener">
+        <div class="thumb-wrap">
+          <svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <radialGradient id="sky2" cx="50%" cy="50%" r="70%">
+                <stop offset="0%" stop-color="#120b1f"/>
+                <stop offset="100%" stop-color="#050a14"/>
+              </radialGradient>
+              <filter id="glow2"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            </defs>
+            <rect width="320" height="180" fill="url(#sky2)"/>
+            <circle cx="160" cy="95" r="80" fill="none" stroke="#c653ff" stroke-width="0.5" opacity="0.2"/>
+            <circle cx="160" cy="95" r="55" fill="none" stroke="#c653ff" stroke-width="0.5" opacity="0.2"/>
+            <circle cx="160" cy="95" r="30" fill="none" stroke="#c653ff" stroke-width="0.5" opacity="0.2"/>
+            <line x1="160" y1="15" x2="160" y2="175" stroke="#c653ff" stroke-width="0.5" opacity="0.15"/>
+            <line x1="80"  y1="95" x2="240" y2="95"  stroke="#c653ff" stroke-width="0.5" opacity="0.15"/>
+            <path d="M160,95 L228,40 A80,80 0 0,1 237,95 Z" fill="rgba(198,83,255,0.08)"/>
+            <line x1="160" y1="95" x2="228" y2="40" stroke="#c653ff" stroke-width="1.5" opacity="0.7"/>
+            <circle cx="220" cy="55" r="8" fill="rgba(255,23,68,0.15)" stroke="#ff1744" stroke-width="1.2"/>
+            <text x="220" y="58" text-anchor="middle" fill="#ff1744" font-size="9" font-weight="bold">✕</text>
+            <circle cx="100" cy="130" r="8" fill="rgba(255,23,68,0.15)" stroke="#ff1744" stroke-width="1.2"/>
+            <text x="100" y="133" text-anchor="middle" fill="#ff1744" font-size="9" font-weight="bold">✕</text>
+            <g transform="translate(90,52)" opacity="0.8">
+              <circle r="10" fill="rgba(255,171,0,0.1)" stroke="#ffab00" stroke-width="1"/>
+              <text text-anchor="middle" dy="4" fill="#ffab00" font-size="9">✈</text>
+            </g>
+            <circle cx="192" cy="128" r="10" fill="rgba(0,230,118,0.1)" stroke="#00e676" stroke-width="1"/>
+            <text x="192" y="131" text-anchor="middle" fill="#00e676" font-size="9">✓</text>
+            <g filter="url(#glow2)" transform="translate(160,95)">
+              <line x1="0" y1="0" x2="-22" y2="-13" stroke="#c653ff" stroke-width="2" stroke-linecap="round"/>
+              <line x1="0" y1="0" x2=" 22" y2="-13" stroke="#c653ff" stroke-width="2" stroke-linecap="round"/>
+              <line x1="0" y1="0" x2="-22" y2=" 13" stroke="#c653ff" stroke-width="2" stroke-linecap="round"/>
+              <line x1="0" y1="0" x2=" 22" y2=" 13" stroke="#c653ff" stroke-width="2" stroke-linecap="round"/>
+              <ellipse cx="-22" cy="-13" rx="12" ry="3.5" fill="none" stroke="#00e5ff" stroke-width="1.5"/>
+              <ellipse cx=" 22" cy="-13" rx="12" ry="3.5" fill="none" stroke="#00e5ff" stroke-width="1.5"/>
+              <ellipse cx="-22" cy=" 13" rx="12" ry="3.5" fill="none" stroke="#00e5ff" stroke-width="1.5"/>
+              <ellipse cx=" 22" cy=" 13" rx="12" ry="3.5" fill="none" stroke="#00e5ff" stroke-width="1.5"/>
+              <rect x="-9" y="-7" width="18" height="14" rx="3" fill="#0b1425" stroke="#c653ff" stroke-width="1.5"/>
+              <circle cx="0" cy="0" r="2.5" fill="#c653ff"/>
+            </g>
+            <text x="160" y="168" text-anchor="middle" fill="#7b8cb0" font-size="8" font-family="monospace">NO-FLY ZONES // WHERE YOU CAN FLY</text>
+          </svg>
+          <div class="thumb-overlay"><div class="play-ring"><svg viewBox="0 0 20 20"><polygon points="5,3 17,10 5,17" fill="#00e5ff"/></svg></div></div>
+        </div>
+        <div class="video-label">▶ &nbsp;Video 2 <span>CLICK TO OPEN ↗</span></div>
+      </a>
+
+      <a class="video-card" href="https://vimeo.com/673445429/aae92cc636" target="_blank" rel="noopener">
+        <div class="thumb-wrap">
+          <svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="sky3" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#040c1a"/>
+                <stop offset="100%" stop-color="#0a1828"/>
+              </linearGradient>
+              <filter id="glow3"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            </defs>
+            <rect width="320" height="180" fill="url(#sky3)"/>
+            <rect x="0" y="145" width="320" height="35" fill="#060d18"/>
+            <line x1="0" y1="145" x2="320" y2="145" stroke="#00e5ff" stroke-width="0.8" opacity="0.3"/>
+            <ellipse cx="160" cy="145" rx="100" ry="12" fill="none" stroke="#ffab00" stroke-width="0.8" stroke-dasharray="5 3" opacity="0.5"/>
+            <ellipse cx="160" cy="145" rx="65"  ry="8"  fill="none" stroke="#ff1744" stroke-width="0.8" stroke-dasharray="5 3" opacity="0.5"/>
+            <ellipse cx="160" cy="145" rx="30"  ry="4"  fill="none" stroke="#ff1744" stroke-width="1.2" opacity="0.7"/>
+            <text x="228" y="142" fill="#ffab00" font-size="7" font-family="monospace" opacity="0.8">30m min</text>
+            <g fill="#1a2a40">
+              <circle cx="100" cy="138" r="4"/><rect x="97" y="142" width="6" height="10" rx="1"/>
+              <circle cx="125" cy="138" r="4"/><rect x="122" y="142" width="6" height="10" rx="1"/>
+              <circle cx="152" cy="138" r="4" fill="#ff1744" opacity="0.5"/><rect x="149" y="142" width="6" height="10" rx="1" fill="#ff1744" opacity="0.4"/>
+            </g>
+            <line x1="160" y1="75" x2="160" y2="145" stroke="#00e5ff" stroke-width="0.8" stroke-dasharray="4 3" opacity="0.35"/>
+            <g filter="url(#glow3)" transform="translate(160,72)">
+              <line x1="0" y1="0" x2="-26" y2="-15" stroke="#00e5ff" stroke-width="2.2" stroke-linecap="round"/>
+              <line x1="0" y1="0" x2=" 26" y2="-15" stroke="#00e5ff" stroke-width="2.2" stroke-linecap="round"/>
+              <line x1="0" y1="0" x2="-26" y2=" 15" stroke="#00e5ff" stroke-width="2.2" stroke-linecap="round"/>
+              <line x1="0" y1="0" x2=" 26" y2=" 15" stroke="#00e5ff" stroke-width="2.2" stroke-linecap="round"/>
+              <ellipse cx="-26" cy="-15" rx="13" ry="4" fill="none" stroke="#ffab00" stroke-width="1.5"/>
+              <ellipse cx=" 26" cy="-15" rx="13" ry="4" fill="none" stroke="#ffab00" stroke-width="1.5"/>
+              <ellipse cx="-26" cy=" 15" rx="13" ry="4" fill="none" stroke="#ffab00" stroke-width="1.5"/>
+              <ellipse cx=" 26" cy=" 15" rx="13" ry="4" fill="none" stroke="#ffab00" stroke-width="1.5"/>
+              <rect x="-9" y="-7" width="18" height="14" rx="3" fill="#0b1425" stroke="#00e5ff" stroke-width="1.5"/>
+              <circle cx="0" cy="0" r="2.5" fill="#ffab00"/>
+            </g>
+            <text x="160" y="168" text-anchor="middle" fill="#7b8cb0" font-size="8" font-family="monospace">SAFE DISTANCES // PEOPLE &amp; PROPERTY</text>
+          </svg>
+          <div class="thumb-overlay"><div class="play-ring"><svg viewBox="0 0 20 20"><polygon points="5,3 17,10 5,17" fill="#00e5ff"/></svg></div></div>
+        </div>
+        <div class="video-label">▶ &nbsp;Video 3 <span>CLICK TO OPEN ↗</span></div>
+      </a>
+
+      <a class="video-card" href="https://vimeo.com/673445343/cbe23065b6" target="_blank" rel="noopener">
+        <div class="thumb-wrap">
+          <svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <radialGradient id="sky4" cx="30%" cy="50%" r="70%">
+                <stop offset="0%" stop-color="#091520"/>
+                <stop offset="100%" stop-color="#050a14"/>
+              </radialGradient>
+              <filter id="glow4"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            </defs>
+            <rect width="320" height="180" fill="url(#sky4)"/>
+            <g stroke="#00e5ff" stroke-width="1.5" fill="none" opacity="0.6">
+              <polyline points="10,10 10,28 28,28"/>
+              <polyline points="310,10 310,28 292,28"/>
+              <polyline points="10,170 10,152 28,152"/>
+              <polyline points="310,170 310,152 292,152"/>
+            </g>
+            <line x1="55" y1="90" x2="140" y2="90" stroke="#00e5ff" stroke-width="0.8" opacity="0.4"/>
+            <line x1="180" y1="90" x2="265" y2="90" stroke="#00e5ff" stroke-width="0.8" opacity="0.4"/>
+            <text x="16" y="22" fill="#00e5ff" font-size="7" font-family="monospace" opacity="0.7">BAT</text>
+            <rect x="16" y="26" width="40" height="6" rx="1" fill="none" stroke="#00e5ff" stroke-width="0.8" opacity="0.5"/>
+            <rect x="17" y="27" width="35" height="4" rx="0.5" fill="#00e676" opacity="0.7"/>
+            <text x="262" y="22" fill="#00e5ff" font-size="7" font-family="monospace" opacity="0.7">GPS</text>
+            <g opacity="0.8">
+              <rect x="262" y="30" width="4" height="4"  fill="#00e676"/>
+              <rect x="268" y="27" width="4" height="7"  fill="#00e676"/>
+              <rect x="274" y="24" width="4" height="10" fill="#00e676"/>
+              <rect x="280" y="21" width="4" height="13" fill="#00e676"/>
+            </g>
+            <g font-family="monospace" font-size="8.5">
+              <text x="195" y="52"  fill="#00e676">✔</text><text x="205" y="52"  fill="#7b8cb0">BATTERY CHARGED</text>
+              <text x="195" y="66"  fill="#00e676">✔</text><text x="205" y="66"  fill="#7b8cb0">PROPS SECURED</text>
+              <text x="195" y="80"  fill="#00e676">✔</text><text x="205" y="80"  fill="#7b8cb0">WEATHER CLEAR</text>
+              <text x="195" y="94"  fill="#00e676">✔</text><text x="205" y="94"  fill="#7b8cb0">LOCATION SAFE</text>
+              <text x="195" y="108" fill="#ffab00">◉</text><text x="205" y="108" fill="#ffab00">READY TO FLY</text>
+            </g>
+            <g filter="url(#glow4)" transform="translate(88,90)">
+              <line x1="0" y1="0" x2="-32" y2="-18" stroke="#00e5ff" stroke-width="2.2" stroke-linecap="round"/>
+              <line x1="0" y1="0" x2=" 32" y2="-18" stroke="#00e5ff" stroke-width="2.2" stroke-linecap="round"/>
+              <line x1="0" y1="0" x2="-32" y2=" 18" stroke="#00e5ff" stroke-width="2.2" stroke-linecap="round"/>
+              <line x1="0" y1="0" x2=" 32" y2=" 18" stroke="#00e5ff" stroke-width="2.2" stroke-linecap="round"/>
+              <ellipse cx="-32" cy="-18" rx="16" ry="4.5" fill="none" stroke="#00e5ff" stroke-width="1.5"/>
+              <ellipse cx=" 32" cy="-18" rx="16" ry="4.5" fill="none" stroke="#00e5ff" stroke-width="1.5"/>
+              <ellipse cx="-32" cy=" 18" rx="16" ry="4.5" fill="none" stroke="#00e5ff" stroke-width="1.5"/>
+              <ellipse cx=" 32" cy=" 18" rx="16" ry="4.5" fill="none" stroke="#00e5ff" stroke-width="1.5"/>
+              <rect x="-11" y="-9" width="22" height="18" rx="4" fill="#0b1425" stroke="#00e5ff" stroke-width="1.8"/>
+              <circle cx="0" cy="0" r="3" fill="#00e676"/>
+            </g>
+            <text x="160" y="168" text-anchor="middle" fill="#7b8cb0" font-size="8" font-family="monospace">PRE-FLIGHT CHECKS // FLYING RESPONSIBLY</text>
+          </svg>
+          <div class="thumb-overlay"><div class="play-ring"><svg viewBox="0 0 20 20"><polygon points="5,3 17,10 5,17" fill="#00e5ff"/></svg></div></div>
+        </div>
+        <div class="video-label">▶ &nbsp;Video 4 <span>CLICK TO OPEN ↗</span></div>
+      </a>
+
+    </div>
+  </div>
+
+  <div class="section" data-step="2">
+    <div class="section-header">
+      <div class="step-badge purple">STEP 02</div>
+      <div class="section-title">Take Notes While You Watch</div>
+    </div>
+
+    <div class="panel accent-purple">
+      <p>While watching the videos, record your notes using the official CASA note-taking sheet. Click below to download the PDF:</p>
+
+      <div style="margin: 14px 0; padding: 12px 14px; background: rgba(198,83,255,0.08); border: 1px solid rgba(198,83,255,0.25); border-radius: 5px;">
+        <div style="font-family:'Orbitron',sans-serif; font-size:calc(9px * var(--fs)); color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; margin-bottom:6px;">📄 Download</div>
+        <a class="cyber-link purple" href="https://www.casa.gov.au/sites/default/files/2022-02/drone-video-recording-sheet-secondary-note-taking.pdf" target="_blank">drone-video-recording-sheet-secondary-note-taking.pdf</a>
+      </div>
+
+      <div class="tip-box">
+        <div class="tip-icon">💡</div>
+        <p>Open the PDF in <strong>Microsoft Edge</strong> — you can type directly into the PDF fields. Press <strong>Ctrl+O</strong> in Edge and select the downloaded file.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="lab-header">
+    <h2>Test Your Knowledge</h2>
+    <p>Now that you've watched the videos, try these four hands-on challenges. Each one tests a different drone safety rule. The more you experiment, the better prepared you'll be for the quiz!</p>
+  </div>
+
+  <div class="widget" data-step="3">
+    <div class="widget-title">
+      <div class="widget-icon cyan">⬆</div>
+      Altitude Simulator
+    </div>
+    <div class="widget-desc">Drag the slider to fly the drone up and down. What's the maximum legal altitude? Find the safe zone.</div>
+
+    <div class="alt-stage" id="altStage">
+      <svg viewBox="0 0 400 280" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <g font-family="monospace" font-size="9" fill="#7b8cb0">
+          <text x="8" y="30">200m</text>
+          <text x="8" y="80">150m</text>
+          <text x="8" y="130">100m</text>
+          <text x="8" y="180">50m</text>
+          <text x="8" y="230">0m</text>
+        </g>
+        <g stroke="#7b8cb0" stroke-width="0.4" opacity="0.3">
+          <line x1="40" y1="28" x2="395" y2="28"/>
+          <line x1="40" y1="78" x2="395" y2="78"/>
+          <line x1="40" y1="128" x2="395" y2="128"/>
+          <line x1="40" y1="178" x2="395" y2="178"/>
+        </g>
+        <line id="limitLine" x1="40" y1="108" x2="395" y2="108" stroke="#ff1744" stroke-width="1.2" stroke-dasharray="6 4" opacity="0.85"/>
+        <text x="50" y="103" fill="#ff1744" font-family="monospace" font-size="9" font-weight="bold">120m LEGAL CEILING ━━ DO NOT EXCEED</text>
+        <rect x="40" y="0" width="355" height="108" fill="#ff1744" opacity="0.06"/>
+        <rect x="40" y="240" width="355" height="40" fill="#0a1828"/>
+        <line x1="40" y1="240" x2="395" y2="240" stroke="#00e5ff" stroke-width="1" opacity="0.5"/>
+        <g stroke="#00e5ff" stroke-width="0.5" opacity="0.2">
+          <line x1="60" y1="240" x2="55" y2="280"/>
+          <line x1="120" y1="240" x2="115" y2="280"/>
+          <line x1="200" y1="240" x2="200" y2="280"/>
+          <line x1="280" y1="240" x2="285" y2="280"/>
+          <line x1="350" y1="240" x2="355" y2="280"/>
+        </g>
+        <g transform="translate(80,225)" fill="#7b8cb0">
+          <circle cx="0" cy="0" r="3.5"/>
+          <rect x="-3" y="3" width="6" height="11" rx="1"/>
+          <line x1="-3" y1="6" x2="-7" y2="13" stroke="#7b8cb0" stroke-width="2"/>
+          <line x1=" 3" y1="6" x2=" 7" y2="13" stroke="#7b8cb0" stroke-width="2"/>
+        </g>
+        <g id="altDrone" transform="translate(220,180)">
+          <line x1="0" y1="0" x2="-22" y2="-13" stroke="#00e5ff" stroke-width="2" stroke-linecap="round"/>
+          <line x1="0" y1="0" x2=" 22" y2="-13" stroke="#00e5ff" stroke-width="2" stroke-linecap="round"/>
+          <line x1="0" y1="0" x2="-22" y2=" 13" stroke="#00e5ff" stroke-width="2" stroke-linecap="round"/>
+          <line x1="0" y1="0" x2=" 22" y2=" 13" stroke="#00e5ff" stroke-width="2" stroke-linecap="round"/>
+          <ellipse class="rotor-spin" cx="-22" cy="-13" rx="11" ry="3.2" fill="none" stroke="#c653ff" stroke-width="1.5"/>
+          <ellipse class="rotor-spin" cx=" 22" cy="-13" rx="11" ry="3.2" fill="none" stroke="#c653ff" stroke-width="1.5"/>
+          <ellipse class="rotor-spin" cx="-22" cy=" 13" rx="11" ry="3.2" fill="none" stroke="#c653ff" stroke-width="1.5"/>
+          <ellipse class="rotor-spin" cx=" 22" cy=" 13" rx="11" ry="3.2" fill="none" stroke="#c653ff" stroke-width="1.5"/>
+          <rect x="-9" y="-7" width="18" height="14" rx="3" fill="#0b1425" stroke="#00e5ff" stroke-width="1.5"/>
+          <circle cx="0" cy="0" r="2.5" fill="#c653ff"/>
+        </g>
+        <line id="altTether" x1="220" y1="180" x2="220" y2="240" stroke="#00e5ff" stroke-width="0.8" stroke-dasharray="3 3" opacity="0.4"/>
+      </svg>
+    </div>
+
+    <div class="alt-controls">
+      <div class="slider-row">
+        <div class="slider-label">ALTITUDE</div>
+        <input type="range" id="altSlider" class="cyber-slider" min="0" max="200" value="60" step="1">
+        <div class="alt-readout" id="altReadout">60m</div>
+      </div>
+      <div class="alt-status safe" id="altStatus">✓ SAFE — WITHIN LEGAL LIMITS</div>
+    </div>
+  </div>
+
+  <div class="widget" data-step="4">
+    <div class="widget-title">
+      <div class="widget-icon green">📏</div>
+      Safe Distance Challenge
+    </div>
+    <div class="widget-desc">You must stay at least 30m from people not helping with your flight. Drag the slider to move people closer or further from your drone.</div>
+
+    <div class="dist-stage" id="distStage">
+      <svg viewBox="0 0 400 280" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="grass" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+            <rect width="20" height="20" fill="#0a1f15"/>
+            <line x1="2" y1="20" x2="2" y2="16" stroke="#1a3a25" stroke-width="0.7"/>
+            <line x1="8" y1="20" x2="8" y2="14" stroke="#1a3a25" stroke-width="0.7"/>
+            <line x1="14" y1="20" x2="14" y2="17" stroke="#1a3a25" stroke-width="0.7"/>
+          </pattern>
+        </defs>
+        <rect width="400" height="280" fill="url(#grass)"/>
+        <circle id="safeCircle" cx="200" cy="140" r="100" fill="rgba(0,230,118,0.06)" stroke="#00e676" stroke-width="1.5" stroke-dasharray="6 4"/>
+        <text x="200" y="60" text-anchor="middle" fill="#00e676" font-family="monospace" font-size="10" font-weight="bold">30m SAFETY ZONE</text>
+        <g stroke="#00e676" stroke-width="0.8" opacity="0.4">
+          <line x1="190" y1="140" x2="210" y2="140"/>
+          <line x1="200" y1="130" x2="200" y2="150"/>
+        </g>
+        <line id="distLine" x1="200" y1="140" x2="320" y2="140" stroke="#00e5ff" stroke-width="1" stroke-dasharray="3 3" opacity="0.7"/>
+        <g transform="translate(200,140)">
+          <line x1="0" y1="0" x2="-18" y2="-10" stroke="#00e5ff" stroke-width="2" stroke-linecap="round"/>
+          <line x1="0" y1="0" x2=" 18" y2="-10" stroke="#00e5ff" stroke-width="2" stroke-linecap="round"/>
+          <line x1="0" y1="0" x2="-18" y2=" 10" stroke="#00e5ff" stroke-width="2" stroke-linecap="round"/>
+          <line x1="0" y1="0" x2=" 18" y2=" 10" stroke="#00e5ff" stroke-width="2" stroke-linecap="round"/>
+          <ellipse class="rotor-spin" cx="-18" cy="-10" rx="9" ry="3" fill="none" stroke="#c653ff" stroke-width="1.5"/>
+          <ellipse class="rotor-spin" cx=" 18" cy="-10" rx="9" ry="3" fill="none" stroke="#c653ff" stroke-width="1.5"/>
+          <ellipse class="rotor-spin" cx="-18" cy=" 10" rx="9" ry="3" fill="none" stroke="#c653ff" stroke-width="1.5"/>
+          <ellipse class="rotor-spin" cx=" 18" cy=" 10" rx="9" ry="3" fill="none" stroke="#c653ff" stroke-width="1.5"/>
+          <rect x="-7" y="-6" width="14" height="12" rx="2" fill="#0b1425" stroke="#00e5ff" stroke-width="1.5"/>
+          <circle cx="0" cy="0" r="2" fill="#00e5ff"/>
+        </g>
+        <g id="distPerson" transform="translate(320,140)">
+          <circle cx="0" cy="-8" r="6" fill="#ffab00"/>
+          <rect x="-5" y="-3" width="10" height="16" rx="2" fill="#ffab00"/>
+          <rect x="-5" y="13" width="4" height="10" fill="#ffab00"/>
+          <rect x="1"  y="13" width="4" height="10" fill="#ffab00"/>
+          <line x1="-5" y1="0" x2="-12" y2="8" stroke="#ffab00" stroke-width="3" stroke-linecap="round"/>
+          <line x1=" 5" y1="0" x2=" 12" y2="8" stroke="#ffab00" stroke-width="3" stroke-linecap="round"/>
+        </g>
+      </svg>
+    </div>
+
+    <div class="alt-controls" style="margin-top:14px;">
+      <div class="slider-row">
+        <div class="slider-label">DISTANCE</div>
+        <input type="range" id="distSlider" class="cyber-slider" min="5" max="80" value="36" step="1">
+        <div class="alt-readout" id="distReadout">36m</div>
+      </div>
+    </div>
+
+    <div class="dist-readout-row">
+      <div class="dist-readout">
+        <div class="dist-readout-label">DISTANCE</div>
+        <div class="dist-readout-value" id="distValue">36m</div>
+      </div>
+      <div class="dist-readout">
+        <div class="dist-readout-label">STATUS</div>
+        <div class="dist-readout-value" id="distStatus" style="font-size: calc(13px * var(--fs));">✓ SAFE</div>
+      </div>
+      <div class="dist-readout">
+        <div class="dist-readout-label">RULE</div>
+        <div class="dist-readout-value" id="distRule" style="font-size: calc(13px * var(--fs)); color: var(--cyan);">30m MIN</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="widget" data-step="5">
+    <div class="widget-title">
+      <div class="widget-icon purple">📍</div>
+      Can You Fly Here?
+    </div>
+    <div class="widget-desc">Six locations around Victoria — decide if it's legal to fly your drone at each. Tap YES or NO and see how you do.</div>
+
+    <div class="scen-stats">
+      <span>SCENARIOS COMPLETED</span>
+      <div class="scen-score"><span id="scenDone">0</span> / 6 &nbsp;·&nbsp; SCORE: <span id="scenScore">0</span></div>
+    </div>
+
+    <div class="scen-grid" id="scenGrid">
+
+      <div class="scen-card" data-correct="yes" data-feedback="✓ Correct! Your own backyard is fine if there are no other people around, you stay below 120m, and you're not in a no-fly zone. Always check a drone safety app first.">
+        <div class="scen-img">
+          <svg viewBox="0 0 200 100" preserveAspectRatio="xMidYMid slice">
+            <rect width="200" height="100" fill="#0a1828"/>
+            <rect width="200" height="60" fill="#1a3050"/>
+            <polygon points="60,55 110,30 160,55" fill="#2a4060"/>
+            <rect x="60" y="55" width="100" height="35" fill="#1a2840"/>
+            <rect x="100" y="65" width="20" height="25" fill="#3a5070"/>
+            <rect x="70" y="62" width="10" height="10" fill="#5070a0" opacity="0.6"/>
+            <rect x="135" y="62" width="10" height="10" fill="#5070a0" opacity="0.6"/>
+            <rect y="85" width="200" height="15" fill="#1a3a25"/>
+            <rect x="20" y="65" width="4" height="20" fill="#3a2818"/>
+            <circle cx="22" cy="62" r="10" fill="#2a4525"/>
+            <g transform="translate(130,40)">
+              <line x1="0" y1="0" x2="-8" y2="-5" stroke="#00e5ff" stroke-width="1.2"/>
+              <line x1="0" y1="0" x2=" 8" y2="-5" stroke="#00e5ff" stroke-width="1.2"/>
+              <line x1="0" y1="0" x2="-8" y2=" 5" stroke="#00e5ff" stroke-width="1.2"/>
+              <line x1="0" y1="0" x2=" 8" y2=" 5" stroke="#00e5ff" stroke-width="1.2"/>
+              <circle cx="0" cy="0" r="2" fill="#00e5ff"/>
+            </g>
+          </svg>
+        </div>
+        <div class="scen-body">
+          <div class="scen-title">🏡 Your Backyard, Doreen</div>
+          <div class="scen-q">Empty backyard, calm weather, no neighbours outside. Can you fly?</div>
+          <div class="scen-btns">
+            <button class="scen-btn yes">✓ YES</button>
+            <button class="scen-btn no">✕ NO</button>
+          </div>
+          <div class="scen-feedback"></div>
+        </div>
+      </div>
+
+      <div class="scen-card" data-correct="no" data-feedback="✕ Definitely not. You can't fly over crowds, sporting events, festivals, or any populous area. Both AFL and A-League stadiums are strict no-fly zones during games.">
+        <div class="scen-img">
+          <svg viewBox="0 0 200 100" preserveAspectRatio="xMidYMid slice">
+            <rect width="200" height="100" fill="#0a1828"/>
+            <ellipse cx="100" cy="100" rx="120" ry="55" fill="#1a2840"/>
+            <ellipse cx="100" cy="100" rx="90" ry="40" fill="#2a4525"/>
+            <ellipse cx="100" cy="100" rx="90" ry="40" fill="none" stroke="#fff" stroke-width="0.8" opacity="0.5"/>
+            <line x1="100" y1="62" x2="100" y2="100" stroke="#fff" stroke-width="0.6" opacity="0.5"/>
+            <g fill="#7b8cb0">
+              <circle cx="20" cy="65" r="1.5"/><circle cx="30" cy="68" r="1.5"/><circle cx="40" cy="62" r="1.5"/>
+              <circle cx="50" cy="66" r="1.5"/><circle cx="60" cy="60" r="1.5"/><circle cx="160" cy="60" r="1.5"/>
+              <circle cx="170" cy="65" r="1.5"/><circle cx="180" cy="62" r="1.5"/>
+            </g>
+            <g fill="#ffab00" opacity="0.8">
+              <circle cx="20" cy="50" r="3"/><circle cx="180" cy="50" r="3"/>
+            </g>
+            <g transform="translate(100,30)">
+              <circle cx="0" cy="0" r="14" fill="#ff1744" opacity="0.15"/>
+              <line x1="0" y1="0" x2="-7" y2="-4" stroke="#ff1744" stroke-width="1.2"/>
+              <line x1="0" y1="0" x2=" 7" y2="-4" stroke="#ff1744" stroke-width="1.2"/>
+              <line x1="0" y1="0" x2="-7" y2=" 4" stroke="#ff1744" stroke-width="1.2"/>
+              <line x1="0" y1="0" x2=" 7" y2=" 4" stroke="#ff1744" stroke-width="1.2"/>
+              <circle cx="0" cy="0" r="2" fill="#ff1744"/>
+            </g>
+            <text x="100" y="14" text-anchor="middle" fill="#ff1744" font-size="7" font-family="monospace" font-weight="bold">⚠ NO-FLY</text>
+          </svg>
+        </div>
+        <div class="scen-body">
+          <div class="scen-title">🏟️ AAMI Park, Live AFL Game</div>
+          <div class="scen-q">It's a packed Saturday match. Can you fly over the stadium?</div>
+          <div class="scen-btns">
+            <button class="scen-btn yes">✓ YES</button>
+            <button class="scen-btn no">✕ NO</button>
+          </div>
+          <div class="scen-feedback"></div>
+        </div>
+      </div>
+
+      <div class="scen-card" data-correct="yes" data-feedback="✓ Correct! An empty public oval is fine — it's not a populous area when no one's there. Stay below 120m, keep visual line of sight, and complete pre-flight checks.">
+        <div class="scen-img">
+          <svg viewBox="0 0 200 100" preserveAspectRatio="xMidYMid slice">
+            <rect width="200" height="100" fill="#0a1828"/>
+            <rect width="200" height="55" fill="#1a3050"/>
+            <ellipse cx="100" cy="90" rx="110" ry="35" fill="#2a4525"/>
+            <ellipse cx="100" cy="90" rx="80" ry="22" fill="none" stroke="#fff" stroke-width="0.8" opacity="0.4"/>
+            <line x1="100" y1="70" x2="100" y2="100" stroke="#fff" stroke-width="0.5" opacity="0.4"/>
+            <g stroke="#ddd" stroke-width="1" opacity="0.6">
+              <line x1="40" y1="86" x2="40" y2="76"/><line x1="46" y1="86" x2="46" y2="76"/>
+              <line x1="155" y1="86" x2="155" y2="76"/><line x1="161" y1="86" x2="161" y2="76"/>
+            </g>
+            <g transform="translate(100,40)">
+              <line x1="0" y1="0" x2="-8" y2="-5" stroke="#00e676" stroke-width="1.2"/>
+              <line x1="0" y1="0" x2=" 8" y2="-5" stroke="#00e676" stroke-width="1.2"/>
+              <line x1="0" y1="0" x2="-8" y2=" 5" stroke="#00e676" stroke-width="1.2"/>
+              <line x1="0" y1="0" x2=" 8" y2=" 5" stroke="#00e676" stroke-width="1.2"/>
+              <circle cx="0" cy="0" r="2" fill="#00e676"/>
+            </g>
+          </svg>
+        </div>
+        <div class="scen-body">
+          <div class="scen-title">⚽ Empty Local Oval</div>
+          <div class="scen-q">No one is using the oval. You've done your safety checks. Can you fly?</div>
+          <div class="scen-btns">
+            <button class="scen-btn yes">✓ YES</button>
+            <button class="scen-btn no">✕ NO</button>
+          </div>
+          <div class="scen-feedback"></div>
+        </div>
+      </div>
+
+      <div class="scen-card" data-correct="no" data-feedback="✕ Correct answer is NO. Drones are generally banned in Victorian national parks (like Wilsons Prom) without a special permit. The same applies to most state and conservation parks across Australia.">
+        <div class="scen-img">
+          <svg viewBox="0 0 200 100" preserveAspectRatio="xMidYMid slice">
+            <rect width="200" height="100" fill="#0a1828"/>
+            <rect width="200" height="45" fill="#152838"/>
+            <polygon points="0,75 40,30 80,55 120,25 160,50 200,35 200,100 0,100" fill="#1a3525"/>
+            <polygon points="0,80 30,50 70,70 110,45 150,65 200,55 200,100 0,100" fill="#0a2515"/>
+            <g fill="#0a3018">
+              <polygon points="20,80 25,65 30,80"/>
+              <polygon points="60,82 65,68 70,82"/>
+              <polygon points="100,80 105,65 110,80"/>
+              <polygon points="150,82 155,68 160,82"/>
+            </g>
+            <rect x="80" y="78" width="38" height="14" rx="2" fill="#3a2818" stroke="#ffab00" stroke-width="0.8"/>
+            <text x="99" y="88" text-anchor="middle" fill="#ffab00" font-size="6" font-family="monospace" font-weight="bold">NAT. PARK</text>
+            <g transform="translate(160,25)">
+              <circle r="11" fill="#0a1828" stroke="#ff1744" stroke-width="2"/>
+              <line x1="-7" y1="-7" x2="7" y2="7" stroke="#ff1744" stroke-width="2"/>
+              <line x1="0" y1="0" x2="-4" y2="-2" stroke="#fff" stroke-width="0.8"/>
+              <line x1="0" y1="0" x2=" 4" y2="-2" stroke="#fff" stroke-width="0.8"/>
+              <line x1="0" y1="0" x2="-4" y2=" 2" stroke="#fff" stroke-width="0.8"/>
+              <line x1="0" y1="0" x2=" 4" y2=" 2" stroke="#fff" stroke-width="0.8"/>
+            </g>
+          </svg>
+        </div>
+        <div class="scen-body">
+          <div class="scen-title">🏞️ Wilsons Promontory NP</div>
+          <div class="scen-q">Beautiful coastline view, no people around. Can you fly?</div>
+          <div class="scen-btns">
+            <button class="scen-btn yes">✓ YES</button>
+            <button class="scen-btn no">✕ NO</button>
+          </div>
+          <div class="scen-feedback"></div>
+        </div>
+      </div>
+
+      <div class="scen-card" data-correct="no" data-feedback="✕ Correct answer is NO. Drones near emergency operations (fires, police, paramedics) put lives at risk and may interfere with helicopters. You must not fly anywhere near emergency operations — leave it to the professionals.">
+        <div class="scen-img">
+          <svg viewBox="0 0 200 100" preserveAspectRatio="xMidYMid slice">
+            <rect width="200" height="100" fill="#0a1828"/>
+            <rect width="200" height="55" fill="#2a1518"/>
+            <polygon points="60,60 100,30 140,60" fill="#3a2818"/>
+            <rect x="60" y="60" width="80" height="35" fill="#2a1c10"/>
+            <g>
+              <path d="M 80 60 Q 75 45 80 35 Q 88 45 85 60 Z" fill="#ff1744"/>
+              <path d="M 95 60 Q 88 40 95 25 Q 105 40 100 60 Z" fill="#ffab00"/>
+              <path d="M 110 60 Q 105 45 112 35 Q 118 45 115 60 Z" fill="#ff1744"/>
+              <path d="M 125 60 Q 120 50 127 42 Q 132 50 130 60 Z" fill="#ffab00"/>
+            </g>
+            <g fill="#7b8cb0" opacity="0.5">
+              <circle cx="95" cy="20" r="8"/><circle cx="105" cy="15" r="9"/><circle cx="115" cy="18" r="7"/>
+              <circle cx="120" cy="10" r="6"/>
+            </g>
+            <g transform="translate(155,75)">
+              <rect x="-12" y="-8" width="24" height="12" rx="1" fill="#ff1744"/>
+              <rect x="-12" y="-12" width="14" height="6" fill="#ff1744"/>
+              <circle cx="-7" cy="6" r="3" fill="#0a0a0a"/>
+              <circle cx="7" cy="6" r="3" fill="#0a0a0a"/>
+              <rect x="-2" y="-14" width="3" height="3" fill="#fff" opacity="0.8"/>
+            </g>
+            <g transform="translate(40,30)">
+              <circle r="10" fill="#0a1828" stroke="#ff1744" stroke-width="2"/>
+              <line x1="-7" y1="-7" x2="7" y2="7" stroke="#ff1744" stroke-width="2"/>
+            </g>
+          </svg>
+        </div>
+        <div class="scen-body">
+          <div class="scen-title">🔥 House Fire Nearby</div>
+          <div class="scen-q">There's a house fire down the street. Should you fly to record/help?</div>
+          <div class="scen-btns">
+            <button class="scen-btn yes">✓ YES</button>
+            <button class="scen-btn no">✕ NO</button>
+          </div>
+          <div class="scen-feedback"></div>
+        </div>
+      </div>
+
+      <div class="scen-card" data-correct="no" data-feedback="✕ Correct answer is NO. You must stay 5.5km from airports and helipads if your drone weighs over 100g. Melbourne, Tullamarine, Avalon and Essendon are all surrounded by no-fly zones. Always check a drone safety app.">
+        <div class="scen-img">
+          <svg viewBox="0 0 200 100" preserveAspectRatio="xMidYMid slice">
+            <rect width="200" height="100" fill="#0a1828"/>
+            <rect width="200" height="55" fill="#152838"/>
+            <polygon points="0,90 200,75 200,100 0,100" fill="#3a3a40"/>
+            <line x1="20" y1="86" x2="180" y2="78" stroke="#ffab00" stroke-width="0.8" stroke-dasharray="6 4"/>
+            <rect x="40" y="55" width="50" height="20" fill="#1a2840"/>
+            <rect x="42" y="58" width="3" height="3" fill="#5070a0" opacity="0.8"/>
+            <rect x="48" y="58" width="3" height="3" fill="#5070a0" opacity="0.8"/>
+            <rect x="54" y="58" width="3" height="3" fill="#5070a0" opacity="0.8"/>
+            <rect x="60" y="58" width="3" height="3" fill="#5070a0" opacity="0.8"/>
+            <rect x="110" y="40" width="6" height="35" fill="#1a2840"/>
+            <rect x="106" y="36" width="14" height="8" fill="#2a4060"/>
+            <g transform="translate(150,40) rotate(-15)" fill="#7b8cb0">
+              <ellipse cx="0" cy="0" rx="20" ry="3"/>
+              <polygon points="-15,-1 -5,-8 0,-8 -3,0"/>
+              <polygon points="-15,1 -5,8 0,8 -3,0"/>
+              <polygon points="14,-1 19,-4 19,-1"/>
+            </g>
+            <text x="100" y="20" text-anchor="middle" fill="#ff1744" font-size="9" font-family="monospace" font-weight="bold">⚠ 5.5km RESTRICTED</text>
+          </svg>
+        </div>
+        <div class="scen-body">
+          <div class="scen-title">✈️ 4km from Tullamarine</div>
+          <div class="scen-q">You're at a friend's place, 4km from Melbourne Airport. Can you fly your 800g drone?</div>
+          <div class="scen-btns">
+            <button class="scen-btn yes">✓ YES</button>
+            <button class="scen-btn no">✕ NO</button>
+          </div>
+          <div class="scen-feedback"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <div style="text-align:center; margin-top:14px;">
+      <button class="scen-reset" id="scenReset">↻ Reset Scenarios</button>
+    </div>
+  </div>
+
+  <div class="widget" data-step="6">
+    <div class="widget-title">
+      <div class="widget-icon amber">🛠</div>
+      Pre-Flight Checklist
+    </div>
+    <div class="widget-desc">Before every flight you must complete these checks. Tap each item to tick it off.</div>
+
+    <div class="check-grid" id="checkGrid">
+      <div class="check-item">
+        <div class="check-box"></div>
+        <div class="check-icon">🔋</div>
+        <div class="check-text"><strong>Battery charged</strong> &mdash; controller and drone fully powered</div>
+      </div>
+      <div class="check-item">
+        <div class="check-box"></div>
+        <div class="check-icon">🌀</div>
+        <div class="check-text"><strong>Propellers secured</strong> &mdash; no cracks, properly fastened</div>
+      </div>
+      <div class="check-item">
+        <div class="check-box"></div>
+        <div class="check-icon">☁️</div>
+        <div class="check-text"><strong>Weather checked</strong> &mdash; clear skies, low wind, dry conditions</div>
+      </div>
+      <div class="check-item">
+        <div class="check-box"></div>
+        <div class="check-icon">📍</div>
+        <div class="check-text"><strong>Location verified</strong> &mdash; checked on a CASA-approved drone safety app</div>
+      </div>
+      <div class="check-item">
+        <div class="check-box"></div>
+        <div class="check-icon">👁</div>
+        <div class="check-text"><strong>Visual line-of-sight</strong> &mdash; able to see drone with own eyes (no binoculars)</div>
+      </div>
+    </div>
+
+    <div class="ready-status" id="readyStatus">⏳ COMPLETE 0 / 5 CHECKS</div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section" data-step="7">
+    <div class="section-header">
+      <div class="step-badge green">STEP 03</div>
+      <div class="section-title">Take the Final Quiz</div>
+    </div>
+
+    <div class="cta-block">
+      <p>Head to the official CASA <strong>Know Your Drone</strong> website. Watch the video on the page, then complete the <strong>15-question</strong> quiz to test what you've learned.</p>
+      <a class="cta-btn" href="https://www.casa.gov.au/knowyourdrone" target="_blank">▶ &nbsp; Launch Know Your Drone</a>
+    </div>
+
+    <div class="quiz-callout">
+      <div class="quiz-callout-header">🎯 Quiz Details</div>
+      <p>The quiz covers altitude limits, distances, no-fly zones, pre-flight checks, and emergency situations — all the rules you've explored above.</p>
+      <div class="score-badge">✅ &nbsp; Score 80% or above to earn your certificate (12 / 15)</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>Source material © 2021 Civil Aviation Safety Authority Australia &mdash; Licensed under CC BY-NC 4.0</p>
+    <p class="pvcc">Plenty Valley Christian College &nbsp;·&nbsp; Digital Technologies</p>
+  </div>
+
+</div>
+
+<script>
+const SCALES = [0.85, 1.0, 1.15, 1.3, 1.5];
+let scaleIdx = 1;
+const root = document.documentElement;
+
+function applyScale() {
+  root.style.setProperty('--fs', SCALES[scaleIdx]);
+}
+
+document.getElementById('fontDown').addEventListener('click', () => {
+  if (scaleIdx > 0) { scaleIdx--; applyScale(); }
+});
+document.getElementById('fontUp').addEventListener('click', () => {
+  if (scaleIdx < SCALES.length - 1) { scaleIdx++; applyScale(); }
+});
+document.getElementById('fontReset').addEventListener('click', () => {
+  scaleIdx = 1; applyScale();
+});
+
+const contrastBtn = document.getElementById('contrastToggle');
+contrastBtn.addEventListener('click', () => {
+  document.body.classList.toggle('high-contrast');
+  contrastBtn.classList.toggle('active');
+});
+
+const progressFill = document.getElementById('progressFill');
+window.addEventListener('scroll', () => {
+  const max = document.body.scrollHeight - window.innerHeight;
+  const pct = Math.min(100, (window.scrollY / max) * 100);
+  progressFill.style.width = pct + '%';
+});
+
+const statCards = document.querySelectorAll('.stat-card');
+
+function animateCounter(el, target, suffix) {
+  const counter = el.querySelector('[data-counter]');
+  const duration = 1400;
+  const start = performance.now();
+  const isFloat = target % 1 !== 0;
+  function tick(now) {
+    const t = Math.min(1, (now - start) / duration);
+    const ease = 1 - Math.pow(1 - t, 3);
+    const val = target * ease;
+    counter.textContent = isFloat ? val.toFixed(1) : Math.floor(val);
+    if (t < 1) requestAnimationFrame(tick);
+    else counter.textContent = isFloat ? target.toFixed(1) : target;
+  }
+  requestAnimationFrame(tick);
+}
+
+const statObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const el = entry.target;
+      const target = parseFloat(el.dataset.target);
+      const suffix = el.dataset.suffix || '';
+      animateCounter(el, target, suffix);
+      statObserver.unobserve(el);
+    }
+  });
+}, { threshold: 0.4 });
+
+statCards.forEach(c => statObserver.observe(c));
+
+const altSlider = document.getElementById('altSlider');
+const altReadout = document.getElementById('altReadout');
+const altStatus = document.getElementById('altStatus');
+const altDrone = document.getElementById('altDrone');
+const altTether = document.getElementById('altTether');
+
+function updateAltitude() {
+  const alt = parseInt(altSlider.value, 10);
+  altReadout.textContent = alt + 'm';
+  const y = 230 - (alt / 200) * 200;
+  altDrone.setAttribute('transform', `translate(220, ${y})`);
+  altTether.setAttribute('y1', y);
+  altTether.setAttribute('y2', 240);
+
+  altStatus.classList.remove('safe', 'warning', 'danger');
+  if (alt > 120) {
+    altStatus.classList.add('danger');
+    altStatus.textContent = '✕ ILLEGAL — ABOVE 120m CEILING';
+  } else if (alt > 100) {
+    altStatus.classList.add('warning');
+    altStatus.textContent = '⚠ APPROACHING LIMIT — ' + (120 - alt) + 'm REMAINING';
+  } else {
+    altStatus.classList.add('safe');
+    altStatus.textContent = '✓ SAFE — WITHIN LEGAL LIMITS';
+  }
+}
+altSlider.addEventListener('input', updateAltitude);
+updateAltitude();
+
+const distSlider = document.getElementById('distSlider');
+const distReadout = document.getElementById('distReadout');
+const distValue = document.getElementById('distValue');
+const distStatus = document.getElementById('distStatus');
+const distRule = document.getElementById('distRule');
+const distPerson = document.getElementById('distPerson');
+const distLine = document.getElementById('distLine');
+const safeCircle = document.getElementById('safeCircle');
+
+function updateDistance() {
+  const m = parseInt(distSlider.value, 10);
+  distReadout.textContent = m + 'm';
+  distValue.textContent = m + 'm';
+  const offset = (m / 80) * 180;
+  const px = 200 + offset;
+  distPerson.setAttribute('transform', `translate(${px}, 140)`);
+  distLine.setAttribute('x2', px);
+
+  distValue.classList.remove('safe', 'danger');
+  if (m < 30) {
+    distValue.classList.add('danger');
+    distStatus.textContent = '✕ TOO CLOSE';
+    distStatus.style.color = 'var(--red)';
+    safeCircle.setAttribute('stroke', '#ff1744');
+    safeCircle.setAttribute('fill', 'rgba(255,23,68,0.08)');
+  } else {
+    distValue.classList.add('safe');
+    distStatus.textContent = '✓ SAFE';
+    distStatus.style.color = 'var(--green)';
+    safeCircle.setAttribute('stroke', '#00e676');
+    safeCircle.setAttribute('fill', 'rgba(0,230,118,0.06)');
+  }
+}
+distSlider.addEventListener('input', updateDistance);
+updateDistance();
+
+const scenCards = document.querySelectorAll('.scen-card');
+const scenDoneEl = document.getElementById('scenDone');
+const scenScoreEl = document.getElementById('scenScore');
+const scenReset = document.getElementById('scenReset');
+
+let scenDone = 0;
+let scenScore = 0;
+
+scenCards.forEach(card => {
+  const correct = card.dataset.correct;
+  const feedback = card.dataset.feedback;
+  const fbEl = card.querySelector('.scen-feedback');
+  const yesBtn = card.querySelector('.scen-btn.yes');
+  const noBtn = card.querySelector('.scen-btn.no');
+
+  function answer(choice) {
+    if (card.classList.contains('locked')) return;
+    card.classList.add('locked');
+    const isCorrect = choice === correct;
+    card.classList.add(isCorrect ? 'correct' : 'wrong');
+    fbEl.classList.add(isCorrect ? 'correct' : 'wrong', 'show');
+    fbEl.textContent = feedback;
+    scenDone++;
+    if (isCorrect) scenScore++;
+    scenDoneEl.textContent = scenDone;
+    scenScoreEl.textContent = scenScore;
+  }
+  yesBtn.addEventListener('click', () => answer('yes'));
+  noBtn.addEventListener('click', () => answer('no'));
+});
+
+scenReset.addEventListener('click', () => {
+  scenCards.forEach(card => {
+    card.classList.remove('locked', 'correct', 'wrong');
+    const fbEl = card.querySelector('.scen-feedback');
+    fbEl.classList.remove('correct', 'wrong', 'show');
+    fbEl.textContent = '';
+  });
+  scenDone = 0;
+  scenScore = 0;
+  scenDoneEl.textContent = 0;
+  scenScoreEl.textContent = 0;
+});
+
+const checkItems = document.querySelectorAll('.check-item');
+const readyStatus = document.getElementById('readyStatus');
+
+function updateReady() {
+  const total = checkItems.length;
+  const done = document.querySelectorAll('.check-item.checked').length;
+  if (done === total) {
+    readyStatus.textContent = '✓ ALL CLEAR — READY TO FLY';
+    readyStatus.classList.add('go');
+  } else {
+    readyStatus.textContent = `⏳ COMPLETE ${done} / ${total} CHECKS`;
+    readyStatus.classList.remove('go');
+  }
+}
+checkItems.forEach(item => {
+  item.addEventListener('click', () => {
+    item.classList.toggle('checked');
+    updateReady();
+  });
+});
+<\/script>
+</body>
+</html>
+
+</script>
+</body>
+</html>
