@@ -1487,93 +1487,126 @@ const SAMPLES = {
   droneblocks: {
     square: {
       label: 'Square Pattern',
-      code: `# Square pattern — same code runs on a real Tello.
-# To deploy: pip install DroneBlocksTelloSimulator, connect to Tello WiFi.
+      code: `# Square pattern — the same code runs on a real Tello drone.
+# To deploy on a real drone:
+#   1. pip install DroneBlocksTelloSimulator
+#   2. Connect your laptop to the Tello WiFi
+#   3. Run this file
 from DroneBlocksTelloSimulator.DroneBlocksSimulatorContextManager import DroneBlocksSimulatorContextManager
 
+# Side length of the square (inches)
 distance = 40
 
+# 'with' opens a flight session and lands automatically if anything goes wrong
 with DroneBlocksSimulatorContextManager(simulator_key=None) as drone:
     drone.takeoff()
+
+    # Trace the four sides of a square
     drone.fly_forward(distance, 'in')
     drone.fly_left(distance, 'in')
     drone.fly_backward(distance, 'in')
     drone.fly_right(distance, 'in')
+
     drone.flip_backward()
     drone.land()
 `,
     },
     staircase: {
       label: 'Staircase',
-      code: `# Staircase: forward + up, repeated.
+      code: `# Staircase: forward then up, repeated four times.
+# A good demo of a 'for' loop running the same instructions over and over.
 from DroneBlocksTelloSimulator.DroneBlocksSimulatorContextManager import DroneBlocksSimulatorContextManager
 
-step = 30
+step = 30   # cm per step
 
 with DroneBlocksSimulatorContextManager(simulator_key=None) as drone:
     drone.takeoff()
+
     for i in range(4):
         drone.fly_forward(step, 'cm')
         drone.fly_up(step, 'cm')
-        print(f"step {i + 1} done")
+        # Commas in print() let us mix words and numbers without f-strings
+        print("step", i + 1, "complete")
+
     drone.land()
 `,
     },
     curve: {
       label: 'Curve Demo',
-      code: `# Curve demo using fly_curve (quadratic Bezier).
+      code: `# Curve demo using fly_curve.
+# fly_curve takes 6 numbers plus a unit:
+#   the first three numbers are a 'control point' that pulls the curve
+#   the last three numbers are the end point of the curve
+# Both points are measured from where the drone is right now.
 from DroneBlocksTelloSimulator.DroneBlocksSimulatorContextManager import DroneBlocksSimulatorContextManager
 
 with DroneBlocksSimulatorContextManager(simulator_key=None) as drone:
     drone.takeoff()
-    drone.fly_curve(50, 50, 0, 100, 0, 0, 'in')
+    drone.fly_curve(50, 50, 0,  100, 0, 0,  'in')
     drone.land()
 `,
     },
     flips: {
       label: 'All Flips',
-      code: `from DroneBlocksTelloSimulator.DroneBlocksSimulatorContextManager import DroneBlocksSimulatorContextManager
+      code: `# Demonstrate all four flip directions.
+# A flip needs the drone airborne with clear space around it.
+from DroneBlocksTelloSimulator.DroneBlocksSimulatorContextManager import DroneBlocksSimulatorContextManager
 
 with DroneBlocksSimulatorContextManager(simulator_key=None) as drone:
     drone.takeoff()
-    drone.fly_up(50, 'cm')
+    drone.fly_up(50, 'cm')   # climb a bit before flipping
+
     drone.flip_forward()
     drone.flip_backward()
     drone.flip_left()
     drone.flip_right()
+
     drone.land()
 `,
     },
     loop: {
       label: 'Pentagon (loop)',
-      code: `import math
+      code: `# Pentagon flight using a for loop.
+# We use math.cos and math.sin to work out where each corner of a
+# regular pentagon is, then fly from one corner to the next.
+import math
 from DroneBlocksTelloSimulator.DroneBlocksSimulatorContextManager import DroneBlocksSimulatorContextManager
 
-radius = 60
+radius = 60   # how big the pentagon is (cm)
 sides = 5
 
 with DroneBlocksSimulatorContextManager(simulator_key=None) as drone:
     drone.takeoff()
+
     for i in range(sides):
+        # Angles (in radians) of this corner and the next one
         a0 = (2 * math.pi / sides) * i
         a1 = (2 * math.pi / sides) * (i + 1)
+
+        # How far to move in x and y to reach the next corner
         dx = round(radius * (math.cos(a1) - math.cos(a0)))
         dy = round(radius * (math.sin(a1) - math.sin(a0)))
+
         drone.fly_to_xyz(dx, dy, 0, 'cm')
+
     drone.land()
 `,
     },
     figure8: {
       label: 'Figure-8',
-      code: `from DroneBlocksTelloSimulator.DroneBlocksSimulatorContextManager import DroneBlocksSimulatorContextManager
+      code: `# Figure-8 built from four quadrant curves, flown twice.
+from DroneBlocksTelloSimulator.DroneBlocksSimulatorContextManager import DroneBlocksSimulatorContextManager
 
 with DroneBlocksSimulatorContextManager(simulator_key=None) as drone:
     drone.takeoff()
+
+    # Repeat the figure-8 path twice
     for _ in range(2):
         drone.fly_curve( 50,  50, 0,  100, 0, 0, 'cm')
         drone.fly_curve( 50, -50, 0,    0, 0, 0, 'cm')
         drone.fly_curve(-50, -50, 0, -100, 0, 0, 'cm')
         drone.fly_curve(-50,  50, 0,    0, 0, 0, 'cm')
+
     drone.land()
 `,
     },
@@ -1583,40 +1616,44 @@ with DroneBlocksSimulatorContextManager(simulator_key=None) as drone:
     starter: {
       label: '★ Starter (connect + battery + takeoff)',
       code: `# djitellopy starter — Lesson 2.
-# Same code runs on a real Tello after:
-#   pip install djitellopy
-# then connect your computer to the Tello-XXXXXX WiFi.
-
+# The same code runs on a real Tello drone after:
+#   1. pip install djitellopy
+#   2. Connect your laptop to the Tello-XXXXXX WiFi
+#   3. Run this file
 from djitellopy import Tello
 
+# Create a Tello object and connect to it
 tello = Tello()
 tello.connect()
 
-print(f"Battery: {tello.get_battery()}%")
-print(f"Temperature: {tello.get_temperature()}°C")
+# Commas in print() separate words and numbers
+print("Battery:", tello.get_battery(), "%")
+print("Temperature:", tello.get_temperature(), "degrees C")
 
 tello.takeoff()
-print(f"Height after takeoff: {tello.get_height()} cm")
+print("Height after takeoff:", tello.get_height(), "cm")
 
 tello.land()
-tello.end()
+tello.end()    # always call end() to clean up
 `,
     },
     square: {
       label: 'Square (move_*)',
-      code: `# Square pattern using move_* commands. All units in cm.
-# Tello SDK constraint: move distances are 20-500 cm.
+      code: `# Square pattern using move_* commands.
+# All distances are in cm. The Tello SDK only accepts
+# move distances between 20 and 500 cm.
 from djitellopy import Tello
 
 tello = Tello()
 tello.connect()
 tello.takeoff()
 
-distance = 80
+distance = 80   # cm — must be at least 20
 
+# Trace the four sides of a square
 tello.move_forward(distance)
 tello.move_left(distance)
-tello.move_back(distance)
+tello.move_back(distance)        # note: 'back', not 'backward'
 tello.move_right(distance)
 
 tello.land()
@@ -1625,19 +1662,20 @@ tello.end()
     },
     rotate: {
       label: 'Rotation (square via rotate)',
-      code: `# Square pattern using rotation.
-# Each pass: move forward, then yaw 90°. Drone now faces a new direction
-# so move_forward goes that way (LOCAL frame).
+      code: `# Square pattern built from rotation instead of strafing.
+# After each move the drone turns 90 degrees, so 'forward'
+# now points in a new direction. This is called the LOCAL frame.
 from djitellopy import Tello
 
 tello = Tello()
 tello.connect()
 tello.takeoff()
 
+# Move forward, turn 90 degrees, repeat — four times traces a square
 for side in range(4):
     tello.move_forward(80)
     tello.rotate_clockwise(90)
-    print(f"side {side + 1} · yaw now {tello.get_yaw()}°")
+    print("side", side + 1, "complete · yaw is now", tello.get_yaw(), "deg")
 
 tello.land()
 tello.end()
@@ -1645,25 +1683,26 @@ tello.end()
     },
     sensors: {
       label: 'Sensor Reading',
-      code: `# Read multiple Tello sensors.
+      code: `# Read multiple Tello sensors before, during, and after flight.
 from djitellopy import Tello
 
 tello = Tello()
 tello.connect()
 
-print("─── Pre-flight ───")
-print(f"Battery:      {tello.get_battery()}%")
-print(f"Temperature:  {tello.get_temperature()}°C")
-print(f"SDK version:  {tello.query_sdk_version()}")
+print("--- Pre-flight ---")
+print("Battery:    ", tello.get_battery(), "%")
+print("Temperature:", tello.get_temperature(), "deg C")
+print("SDK version:", tello.query_sdk_version())
 
 tello.takeoff()
 tello.move_up(50)
 
-print("─── Mid-flight ───")
-print(f"Height:       {tello.get_height()} cm")
-print(f"TOF distance: {tello.get_distance_tof()} cm")
-print(f"Yaw:          {tello.get_yaw()}°")
-print(f"Flight time:  {tello.get_flight_time()} s")
+# These sensor values change as the drone moves
+print("--- Mid-flight ---")
+print("Height:      ", tello.get_height(), "cm")
+print("TOF distance:", tello.get_distance_tof(), "cm")
+print("Yaw:         ", tello.get_yaw(), "deg")
+print("Flight time: ", tello.get_flight_time(), "s")
 
 tello.land()
 tello.end()
@@ -1671,21 +1710,22 @@ tello.end()
     },
     go_xyz: {
       label: 'go_xyz_speed (3D move)',
-      code: `# go_xyz_speed flies to a point relative to current position
-# in the drone's local frame:
-#   x = forward (+) / back (-)
-#   y = left    (+) / right (-)
-#   z = up      (+) / down (-)
-# Range per axis: -500..500 cm.  Speed range: 10..100 cm/s.
+      code: `# go_xyz_speed flies to a point relative to where the drone is now,
+# measured in the drone's LOCAL frame:
+#   x = forward (+) or back (-)
+#   y = left    (+) or right (-)
+#   z = up      (+) or down (-)
+# Each axis is limited to -500..500 cm. Speed is 10..100 cm/s.
 from djitellopy import Tello
 
 tello = Tello()
 tello.connect()
 tello.takeoff()
 
-# Fly to a corner up high
+# Fly to a point that is forward, left, and high
 tello.go_xyz_speed(100, 80, 60, 60)
-# Return
+
+# Return to the takeoff position
 tello.go_xyz_speed(-100, -80, -60, 60)
 
 tello.land()
@@ -1694,17 +1734,17 @@ tello.end()
     },
     curve: {
       label: 'Curve (curve_xyz_speed)',
-      code: `# curve_xyz_speed: arc through a midpoint to an endpoint.
-# Both points relative; the three points (current, mid, end) must form
-# a circular arc with radius 0.5-10 m on a real Tello.
+      code: `# curve_xyz_speed flies a curved arc through a midpoint to an endpoint.
+# Both points are relative to where the drone is right now.
+# On a real Tello the arc must have a radius between 0.5 m and 10 m.
 from djitellopy import Tello
 
 tello = Tello()
 tello.connect()
 tello.takeoff()
 
-#                  mid           end           speed
-tello.curve_xyz_speed(50, 50, 0, 100, 0, 0, 30)
+#                     midpoint        endpoint        speed
+tello.curve_xyz_speed(50, 50, 0,  100, 0, 0,  30)
 
 tello.land()
 tello.end()
@@ -1712,14 +1752,17 @@ tello.end()
     },
     spiral: {
       label: 'Vertical Spiral',
-      code: `# Vertical spiral: walk a circle while climbing.
+      code: `# Vertical spiral — walk around a circle while climbing.
 from djitellopy import Tello
 
 tello = Tello()
 tello.connect()
 tello.takeoff()
+
+# set_speed sets the default movement speed for everything that follows (cm/s)
 tello.set_speed(50)
 
+# Eight short 'forward + turn + up' steps build into a spiral
 for _ in range(8):
     tello.move_forward(40)
     tello.rotate_clockwise(45)
@@ -1731,15 +1774,18 @@ tello.end()
     },
     flips: {
       label: 'Flips (with battery check)',
-      code: `# Real Tello refuses to flip below 50% battery.
-# We model the same check here.
+      code: `# A real Tello refuses to flip when the battery is below 50%.
+# We check first and skip the flips if the battery is too low.
 from djitellopy import Tello
 
 tello = Tello()
 tello.connect()
 
-if tello.get_battery() < 50:
-    print(f"Battery {tello.get_battery()}% — too low for flips")
+# Save the battery level into a variable so we don't have to ask twice
+battery = tello.get_battery()
+
+if battery < 50:
+    print("Battery", battery, "% — too low for flips")
 else:
     tello.takeoff()
     tello.move_up(50)
@@ -1754,7 +1800,9 @@ tello.end()
     },
     feedback: {
       label: 'Sensor-driven Climb',
-      code: `# Climb until height threshold reached, using sensor feedback.
+      code: `# Climb until the drone reaches a target height, using the
+# height sensor as feedback. Same idea as a thermostat: keep
+# going until the goal is met.
 from djitellopy import Tello
 
 tello = Tello()
@@ -1762,11 +1810,14 @@ tello.connect()
 tello.takeoff()
 
 target_cm = 200
+
+# Keep climbing while the drone is still below target_cm
 while tello.get_height() < target_cm:
     tello.move_up(20)
-    print(f"Height: {tello.get_height()} cm")
+    print("Height:", tello.get_height(), "cm")
 
 print("Target altitude reached.")
+
 tello.move_forward(100)
 tello.land()
 tello.end()
@@ -1774,9 +1825,9 @@ tello.end()
     },
     emergency: {
       label: 'Emergency Stop',
-      code: `# emergency() kills the motors INSTANTLY.
-# Real Tello will fall — only use if the drone is genuinely unsafe.
-# For a controlled descent use land() instead.
+      code: `# emergency() instantly stops the motors. The drone will FALL.
+# Only use this when something has genuinely gone wrong.
+# For a controlled landing, always use land() instead.
 from djitellopy import Tello
 
 tello = Tello()
@@ -1784,8 +1835,8 @@ tello.connect()
 tello.takeoff()
 tello.move_up(80)
 
-# Imagine an unsafe condition was detected
-print("⚠ Unsafe condition detected — emergency stop!")
+# Pretend our code has detected something dangerous
+print("WARNING: unsafe condition detected — emergency stop!")
 tello.emergency()
 
 tello.end()
@@ -1793,8 +1844,8 @@ tello.end()
     },
     patrol: {
       label: 'Patrol Pattern (rotation + waypoints)',
-      code: `# Patrol four corners, scanning each direction.
-# Demonstrates combining rotation, waypoints, and sensor logging.
+      code: `# Patrol four corners of a square, scanning each direction at every stop.
+# A good template for survey or inspection missions.
 from djitellopy import Tello
 
 tello = Tello()
@@ -1802,19 +1853,32 @@ tello.connect()
 tello.takeoff()
 tello.set_speed(60)
 
-waypoints = [(100, 0), (100, 100), (0, 100), (0, 0)]
-last_x, last_y = 0, 0
+# A list of corners to visit, each one stored as [x, y]
+waypoints = [[100, 0], [100, 100], [0, 100], [0, 0]]
 
-for x, y in waypoints:
+# Remember our last position so we know how far to move next
+last_x = 0
+last_y = 0
+
+for point in waypoints:
+    x = point[0]
+    y = point[1]
+
+    # Distance to move from the last corner to this one
     dx = x - last_x
     dy = y - last_y
     if dx != 0 or dy != 0:
         tello.go_xyz_speed(dx, dy, 0, 60)
-    # Scan: spin slowly through 360°
+
+    # Spin a full circle to scan all directions (4 x 90 = 360 degrees)
     for _ in range(4):
         tello.rotate_clockwise(90)
-    print(f"Visited ({x},{y}) · battery {tello.get_battery()}%")
-    last_x, last_y = x, y
+
+    print("Visited corner", x, y, "· battery", tello.get_battery(), "%")
+
+    # Update 'last position' for the next time round the loop
+    last_x = x
+    last_y = y
 
 tello.land()
 tello.end()
@@ -2118,7 +2182,7 @@ class TelloException(Exception):
 
 def _check_range(value, lo, hi, name):
     if value < lo or value > hi:
-        raise TelloException(f"{name}={value} out of range {lo}..{hi}")
+        raise TelloException(name + "=" + str(value) + " out of range " + str(lo) + ".." + str(hi))
 
 
 class Tello:
@@ -2183,7 +2247,7 @@ class Tello:
         _check_range(x, 20, 500, 'x')
         _b.dji_move_down(x)
     def move(self, direction, x):
-        return getattr(self, f"move_{direction}")(x)
+        return getattr(self, "move_" + direction)(x)
 
     def rotate_clockwise(self, x):
         _check_range(x, 1, 360, 'x')
@@ -2207,7 +2271,7 @@ class Tello:
     def flip(self, direction):
         m = {'l': 'flip_left', 'r': 'flip_right', 'f': 'flip_forward', 'b': 'flip_back'}
         if direction not in m:
-            raise TelloException(f"Unknown flip direction '{direction}'")
+            raise TelloException("Unknown flip direction '" + direction + "'")
         return getattr(self, m[direction])()
     def flip_left(self):     _b.dji_flip_left()
     def flip_right(self):    _b.dji_flip_right()
