@@ -1,0 +1,1937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Drone Blocks Studio // Block-Coding Edition</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@300;400;500;700&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
+
+<!-- CodeMirror — used here in READ-ONLY mode to preview generated code -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+
+<!-- Blockly (Geras renderer is the default, traditional, compact look) -->
+<script src="https://unpkg.com/blockly@11/blockly_compressed.js"></script>
+<script src="https://unpkg.com/blockly@11/blocks_compressed.js"></script>
+<script src="https://unpkg.com/blockly@11/python_compressed.js"></script>
+<script src="https://unpkg.com/blockly@11/msg/en.js"></script>
+
+<style>
+  :root {
+    --bg-deep: #05070f;
+    --bg-panel: #0a0e1f;
+    --bg-elevated: #0e1428;
+    --bg-header: #11172e;
+    --border: #1a2548;
+    --border-glow: #2a3a6a;
+    --cyan: #00e5ff;
+    --cyan-dim: #00b8cc;
+    --purple: #b388ff;
+    --green: #5cffae;
+    --amber: #ffb347;
+    --red: #ff5577;
+    --text: #d8e3ff;
+    --text-dim: #6f7fa6;
+    --text-faint: #3d4870;
+    --grid-line: rgba(0, 229, 255, 0.06);
+    --col-left: 38%;
+    --row-top: 62%;
+    --gap: 4px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: var(--bg-deep); color: var(--text); font-family: 'Rajdhani', sans-serif; overflow: hidden; }
+  body {
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
+      radial-gradient(ellipse at 20% 10%, rgba(0, 229, 255, 0.08), transparent 50%),
+      radial-gradient(ellipse at 80% 90%, rgba(179, 136, 255, 0.06), transparent 50%);
+    background-size: 40px 40px, 40px 40px, 100% 100%, 100% 100%;
+    user-select: none;
+  }
+
+  /* ─── Header ─── */
+  header {
+    height: 52px;
+    background: linear-gradient(180deg, rgba(10,14,31,0.95), rgba(10,14,31,0.85));
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; padding: 0 16px; gap: 14px;
+    position: relative; z-index: 10; backdrop-filter: blur(8px);
+  }
+  header::after {
+    content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--cyan), transparent); opacity: 0.3;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand-mark {
+    width: 30px; height: 30px; border: 1.5px solid var(--cyan);
+    transform: rotate(45deg); position: relative;
+    box-shadow: 0 0 16px rgba(0,229,255,0.5), inset 0 0 8px rgba(0,229,255,0.3);
+  }
+  .brand-mark::before { content: ''; position: absolute; inset: 4px; border: 1px solid rgba(0,229,255,0.6); }
+  .brand-mark::after {
+    content: ''; position: absolute; width: 4px; height: 4px;
+    top: 50%; left: 50%; transform: translate(-50%,-50%);
+    background: var(--cyan); border-radius: 50%; box-shadow: 0 0 6px var(--cyan);
+  }
+  .brand-text { line-height: 1; }
+  .brand-text .title {
+    font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 14px;
+    letter-spacing: 2px; color: var(--text);
+    text-shadow: 0 0 8px rgba(0,229,255,0.4);
+  }
+  .brand-text .title span { color: var(--cyan); }
+  .brand-text .sub {
+    font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 1.5px;
+    color: var(--text-faint); margin-top: 2px; text-transform: uppercase;
+  }
+  .header-spacer { flex: 1; }
+  .header-stat {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 1px;
+    color: var(--text-dim); text-transform: uppercase; padding: 6px 10px;
+    border: 1px solid var(--border); background: rgba(0,0,0,0.3);
+  }
+  .header-stat span { color: var(--green); font-weight: 700; }
+  .header-stat.battery span.warn { color: var(--amber); }
+  .header-stat.battery span.crit { color: var(--red); }
+  .pulse-dot {
+    display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--green); animation: pulse 1.5s ease-in-out infinite; margin-right: 4px;
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(92,255,174,0.7); }
+    50% { box-shadow: 0 0 0 6px rgba(92,255,174,0); }
+  }
+
+  /* ─── Main grid ─── */
+  main {
+    height: calc(100vh - 52px);
+    display: grid;
+    grid-template-columns: var(--col-left) var(--gap) 1fr;
+  }
+  main.left-collapsed  { grid-template-columns: 44px var(--gap) 1fr; }
+  main.right-collapsed { grid-template-columns: 1fr var(--gap) 44px; }
+  #right-col { display: grid; grid-template-rows: var(--row-top) var(--gap) 1fr; min-width: 0; min-height: 0; }
+  #right-col.top-collapsed    { grid-template-rows: 44px var(--gap) 1fr; }
+  #right-col.bottom-collapsed { grid-template-rows: 1fr var(--gap) 44px; }
+
+  /* ─── Splitters ─── */
+  .splitter { background: var(--border); position: relative; transition: background 0.15s; z-index: 8; }
+  .splitter:hover, .splitter.dragging { background: var(--cyan); }
+  .splitter-vertical { cursor: ew-resize; }
+  .splitter-horizontal { cursor: ns-resize; }
+  .splitter::after {
+    content: ''; position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%,-50%); background: var(--text-faint); transition: background 0.15s;
+  }
+  .splitter:hover::after, .splitter.dragging::after { background: white; }
+  .splitter-vertical::after { width: 2px; height: 28px; }
+  .splitter-horizontal::after { width: 28px; height: 2px; }
+  .splitter-disabled { pointer-events: none; opacity: 0.4; }
+
+  /* ─── Pane shell ─── */
+  .pane { display: flex; flex-direction: column; min-width: 0; min-height: 0; background: var(--bg-panel); overflow: hidden; }
+  .pane-header {
+    flex-shrink: 0; height: 38px;
+    background: var(--bg-header); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; padding: 0 8px 0 12px; gap: 8px;
+    font-family: 'Orbitron', sans-serif; font-size: 10px;
+    letter-spacing: 1.5px; text-transform: uppercase;
+  }
+  .pane-title-icon { color: var(--cyan); font-weight: 700; text-shadow: 0 0 6px var(--cyan); }
+  .pane-title { color: var(--text); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pane-title em {
+    color: var(--text-dim); font-style: normal; font-weight: 400;
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; text-transform: lowercase;
+    letter-spacing: 0; margin-left: 6px;
+  }
+  .pane-spacer { flex: 1; }
+  .pane-btn {
+    width: 24px; height: 24px; background: transparent;
+    border: 1px solid var(--border); color: var(--text-dim);
+    cursor: pointer; font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s; padding: 0;
+  }
+  .pane-btn:hover { color: var(--cyan); border-color: var(--cyan); background: rgba(0,229,255,0.08); }
+  .pane-body { flex: 1; min-height: 0; min-width: 0; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+  .pane.collapsed .pane-body, .pane.collapsed .pane-footer { display: none; }
+  .pane.collapsed .pane-header { border-bottom: none; }
+  .pane-footer {
+    flex-shrink: 0; background: var(--bg-elevated);
+    border-top: 1px solid var(--border); padding: 8px 10px;
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  }
+  /* Hide non-essential header items when a pane collapses so the expand button is always visible. */
+  .pane.collapsed .pane-header > .editor-select,
+  .pane.collapsed .pane-header > .inline-tabs,
+  .pane.collapsed .pane-header > .pane-btn:not([data-collapse]) {
+    display: none;
+  }
+  #pane-viewport.collapsed .pane-header > *:not([data-collapse]) { display: none; }
+  #pane-viewport.collapsed .pane-header { padding: 0; justify-content: center; }
+  .pane.collapsed .pane-header > [data-collapse] {
+    color: var(--cyan); border-color: var(--cyan);
+    background: rgba(0, 229, 255, 0.15);
+    box-shadow: 0 0 8px rgba(0, 229, 255, 0.35);
+  }
+
+  /* ─── Inline tabs (output pane) ─── */
+  .inline-tabs { display: flex; gap: 2px; margin-left: 4px; }
+  .inline-tab {
+    background: transparent; border: 1px solid var(--border); color: var(--text-faint);
+    font-family: 'Orbitron', sans-serif; font-size: 9px; letter-spacing: 1.5px;
+    text-transform: uppercase; padding: 4px 10px; cursor: pointer; transition: all 0.15s;
+  }
+  .inline-tab:hover { color: var(--text-dim); }
+  .inline-tab.active { color: var(--cyan); border-color: var(--cyan); background: rgba(0,229,255,0.08); }
+
+  /* ─── Viewport ─── */
+  #viewport-wrap { flex: 1; position: relative; background: radial-gradient(ellipse at center, #0a1230 0%, #03060f 100%); overflow: hidden; }
+  #viewport { width: 100%; height: 100%; display: block; }
+  .hud {
+    position: absolute; pointer-events: none;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: var(--cyan); text-shadow: 0 0 8px rgba(0,229,255,0.6); z-index: 2;
+  }
+  .hud-tl { top: 12px; left: 12px; }
+  .hud-tr { top: 12px; right: 12px; text-align: right; }
+  .hud-bl { bottom: 12px; left: 12px; }
+  .hud-br { bottom: 12px; right: 12px; text-align: right; }
+  .hud-block {
+    background: rgba(5,7,15,0.65); border: 1px solid rgba(0,229,255,0.25);
+    padding: 6px 10px; margin-bottom: 6px; backdrop-filter: blur(4px); min-width: 110px;
+  }
+  .hud-block .label { font-size: 9px; color: var(--text-dim); letter-spacing: 1.5px; text-transform: uppercase; }
+  .hud-block .value { font-size: 13px; font-weight: 500; color: var(--cyan); }
+  .hud-block.armed .value, .hud-block.armed .label { color: var(--green); }
+  .hud-corner { position: absolute; width: 22px; height: 22px; border: 1px solid var(--cyan); opacity: 0.5; z-index: 2; }
+  .hud-corner.tl { top: 6px; left: 6px;   border-right: none; border-bottom: none; }
+  .hud-corner.tr { top: 6px; right: 6px;  border-left: none;  border-bottom: none; }
+  .hud-corner.bl { bottom: 6px; left: 6px;border-right: none; border-top: none; }
+  .hud-corner.br { bottom: 6px; right: 6px;border-left: none; border-top: none; }
+  .scan-line {
+    position: absolute; inset: 0; pointer-events: none; z-index: 1;
+    background: linear-gradient(180deg, transparent 49.9%, rgba(0,229,255,0.04) 50%, transparent 50.1%);
+    background-size: 100% 4px;
+  }
+  .view-controls {
+    position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 4px; z-index: 5;
+  }
+  .view-btn {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 1px;
+    background: rgba(5,7,15,0.7); border: 1px solid var(--border);
+    color: var(--text-dim); padding: 5px 11px; cursor: pointer;
+    transition: all 0.15s; backdrop-filter: blur(4px);
+  }
+  .view-btn:hover { color: var(--cyan); border-color: var(--cyan); }
+  .view-btn.active { color: var(--cyan); border-color: var(--cyan); background: rgba(0,229,255,0.12); }
+
+  /* ─── Blockly host ─── */
+  .blockly-host {
+    flex: 1; min-height: 0; min-width: 0;
+    position: relative;
+  }
+  .blockly-host > div { position: absolute; inset: 0; }
+
+  /* Blockly visual tweaks to fit the dark cyberpunk shell */
+  .blocklyMainBackground { stroke: none !important; }
+  .blocklyToolboxDiv {
+    background: var(--bg-header) !important;
+    border-right: 1px solid var(--border);
+    font-family: 'Rajdhani', sans-serif !important;
+    font-weight: 500 !important;
+  }
+  .blocklyTreeRow {
+    margin: 2px 0 !important;
+    padding-right: 8px !important;
+    height: 28px !important;
+    line-height: 28px !important;
+  }
+  .blocklyTreeLabel {
+    font-family: 'Rajdhani', sans-serif !important;
+    font-size: 13px !important;
+    color: var(--text) !important;
+  }
+  .blocklyTreeSelected { background: rgba(0, 229, 255, 0.18) !important; }
+  .blocklyTreeSelected .blocklyTreeLabel { color: var(--cyan) !important; }
+  .blocklyFlyoutBackground { fill: #0e1428 !important; fill-opacity: 0.97 !important; }
+  .blocklyFlyoutScrollbar { display: block; }
+  .blocklyScrollbarBackground { fill: transparent !important; }
+  .blocklyScrollbarHandle { fill: #2a3a6a !important; }
+  .blocklyZoom > image, .blocklyZoom > rect { opacity: 0.8; }
+
+  /* ─── CodeMirror VSCode Dark+ theme (read-only preview) ─── */
+  .cm-host { flex: 1; min-height: 0; display: flex; background: #1e1e1e; }
+  .CodeMirror {
+    flex: 1; min-height: 0; height: 100%;
+    font-family: 'JetBrains Mono','Cascadia Code',Consolas,Menlo,monospace !important;
+    font-size: 12px !important; line-height: 1.55 !important;
+  }
+  .cm-s-vsc-dark.CodeMirror { background: #1e1e1e; color: #d4d4d4; }
+  .cm-s-vsc-dark .CodeMirror-gutters { background: #1e1e1e; border-right: 1px solid #2d2d30; width: 44px; }
+  .cm-s-vsc-dark .CodeMirror-linenumber { color: #858585; padding: 0 8px 0 0; font-size: 11px; }
+  .cm-s-vsc-dark .CodeMirror-cursor { display: none !important; } /* read-only — no cursor */
+  .cm-s-vsc-dark .CodeMirror-selected { background: #264f78 !important; }
+  .cm-s-vsc-dark .cm-keyword  { color: #c586c0; }
+  .cm-s-vsc-dark .cm-builtin  { color: #4ec9b0; }
+  .cm-s-vsc-dark .cm-atom     { color: #569cd6; }
+  .cm-s-vsc-dark .cm-string   { color: #ce9178; }
+  .cm-s-vsc-dark .cm-string-2 { color: #ce9178; }
+  .cm-s-vsc-dark .cm-number   { color: #b5cea8; }
+  .cm-s-vsc-dark .cm-comment  { color: #6a9955; font-style: italic; }
+  .cm-s-vsc-dark .cm-def      { color: #dcdcaa; }
+  .cm-s-vsc-dark .cm-variable { color: #9cdcfe; }
+  .cm-s-vsc-dark .cm-property { color: #dcdcaa; }
+  .cm-s-vsc-dark .cm-operator { color: #d4d4d4; }
+  .cm-s-vsc-dark .cm-meta     { color: #c586c0; }
+  .CodeMirror ::-webkit-scrollbar-track { background: #1e1e1e; }
+  .CodeMirror ::-webkit-scrollbar-thumb { background: #424242; border: 2px solid #1e1e1e; }
+  .CodeMirror ::-webkit-scrollbar-thumb:hover { background: #5a5a5a; }
+
+  /* ─── Console ─── */
+  .console-body {
+    flex: 1; overflow-y: auto; overflow-x: auto; background: #1a1a1a;
+    padding: 10px 14px; font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; line-height: 1.6; user-select: text; color: #d4d4d4;
+  }
+  .console-line { white-space: pre-wrap; word-break: break-word; }
+  .console-line.sys { color: #858585; }
+  .console-line.cmd { color: #4ec9b0; }
+  .console-line.cmd::before { content: '› '; opacity: 0.7; }
+  .console-line.ok { color: #b5cea8; }
+  .console-line.ok::before { content: '✓ '; }
+  .console-line.warn { color: #dcdcaa; }
+  .console-line.warn::before { content: '⚠ '; }
+  .console-line.err { color: #f48771; }
+  .console-line.err::before { content: '✗ '; }
+  .console-line.print { color: #c586c0; }
+
+  /* ─── Buttons ─── */
+  .btn {
+    font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 10px;
+    letter-spacing: 1.5px; text-transform: uppercase; padding: 7px 12px;
+    background: var(--bg-deep); border: 1px solid var(--border); color: var(--text-dim);
+    cursor: pointer; transition: all 0.15s;
+    display: flex; align-items: center; gap: 6px; white-space: nowrap;
+  }
+  .btn:hover:not(:disabled) { color: var(--text); border-color: var(--border-glow); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-run { color: var(--green); border-color: var(--green); background: rgba(92,255,174,0.1); }
+  .btn-run:hover:not(:disabled) { background: rgba(92,255,174,0.2); box-shadow: 0 0 12px rgba(92,255,174,0.5); }
+  .btn-stop { color: var(--red); border-color: var(--red); }
+  .btn-stop:hover:not(:disabled) { background: rgba(255,85,119,0.15); box-shadow: 0 0 12px rgba(255,85,119,0.4); }
+
+  .editor-select {
+    background: var(--bg-deep); border: 1px solid var(--border); color: var(--text);
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    padding: 4px 8px; cursor: pointer; outline: none;
+    text-transform: none; letter-spacing: 0;
+  }
+  .editor-select:focus, .editor-select:hover { border-color: var(--cyan); }
+
+  .speed-control {
+    margin-left: auto; display: flex; align-items: center; gap: 6px;
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-dim); letter-spacing: 1px;
+  }
+  .speed-control input[type=range] {
+    -webkit-appearance: none; width: 80px; height: 2px;
+    background: var(--border); outline: none;
+  }
+  .speed-control input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 12px; height: 12px;
+    background: var(--cyan); border-radius: 50%; cursor: pointer; box-shadow: 0 0 6px var(--cyan);
+  }
+  .speed-control input[type=range]::-moz-range-thumb {
+    width: 12px; height: 12px; background: var(--cyan); border-radius: 50%;
+    cursor: pointer; border: none; box-shadow: 0 0 6px var(--cyan);
+  }
+
+  /* ─── Loading ─── */
+  #loading {
+    position: fixed; inset: 0; background: var(--bg-deep); z-index: 100;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transition: opacity 0.6s;
+  }
+  #loading.hidden { opacity: 0; pointer-events: none; }
+  .boot-screen { width: min(560px, 90vw); font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--cyan); }
+  .boot-title {
+    font-family: 'Orbitron', sans-serif; font-size: 24px; font-weight: 900;
+    letter-spacing: 4px; color: var(--text); text-align: center; margin-bottom: 6px;
+    text-shadow: 0 0 20px rgba(0,229,255,0.6);
+  }
+  .boot-title span { color: var(--cyan); }
+  .boot-version { text-align: center; color: var(--purple); letter-spacing: 3px; font-size: 11px; margin-bottom: 4px; font-weight: 700; }
+  .boot-sub { text-align: center; color: var(--text-faint); letter-spacing: 3px; font-size: 10px; margin-bottom: 28px; }
+  .boot-log { height: 160px; overflow: hidden; border: 1px solid var(--border); background: rgba(0,0,0,0.4); padding: 10px 14px; line-height: 1.6; }
+  .boot-log .line { opacity: 0; animation: bootline 0.3s forwards; }
+  @keyframes bootline { to { opacity: 1; } }
+  .boot-progress { margin-top: 16px; height: 4px; background: var(--border); overflow: hidden; position: relative; }
+  .boot-progress::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+    animation: scan 1.5s linear infinite;
+  }
+  @keyframes scan { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+
+  /* ─── Toast ─── */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--bg-elevated); border: 1px solid var(--cyan); color: var(--text);
+    padding: 10px 18px; font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 1px;
+    box-shadow: 0 4px 24px rgba(0,229,255,0.4), 0 0 16px rgba(0,229,255,0.2);
+    z-index: 200; opacity: 0; transition: opacity 0.25s, transform 0.25s; pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(-8px); }
+
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: var(--bg-deep); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border: 2px solid var(--bg-deep); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--border-glow); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-mark"></div>
+    <div class="brand-text">
+      <div class="title">DRONE <span>BLOCKS</span> STUDIO</div>
+      <div class="sub">Block-Coding Edition · Beginner-Friendly</div>
+    </div>
+  </div>
+  <div class="header-spacer"></div>
+  <div class="header-stat" id="stat-status"><span class="pulse-dot"></span><span id="status-text">READY</span></div>
+  <div class="header-stat battery">BAT <span id="stat-battery">100%</span></div>
+  <div class="header-stat">FPS <span id="stat-fps">--</span></div>
+  <button class="btn" id="btn-restore-all" title="Restore all panes">⊞ Restore Layout</button>
+</header>
+
+<main id="main-grid">
+
+  <!-- VIEWPORT -->
+  <div class="pane" id="pane-viewport">
+    <div class="pane-header">
+      <span class="pane-title-icon">⬢</span>
+      <span class="pane-title">3D Viewport <em>iso</em></span>
+      <span class="pane-spacer"></span>
+      <button class="pane-btn" id="btn-reset-view" title="Reset camera">⟲</button>
+      <button class="pane-btn" data-collapse="left" title="Collapse">▣</button>
+    </div>
+    <div class="pane-body">
+      <div id="viewport-wrap">
+        <canvas id="viewport"></canvas>
+        <div class="scan-line"></div>
+        <span class="hud-corner tl"></span><span class="hud-corner tr"></span>
+        <span class="hud-corner bl"></span><span class="hud-corner br"></span>
+
+        <div class="view-controls">
+          <button class="view-btn active" data-view="iso">ISO</button>
+          <button class="view-btn" data-view="top">TOP</button>
+          <button class="view-btn" data-view="front">FRONT</button>
+          <button class="view-btn" data-view="side">SIDE</button>
+          <button class="view-btn" data-view="follow">FOLLOW</button>
+        </div>
+
+        <div class="hud hud-tl">
+          <div class="hud-block" id="hud-flight-block">
+            <div class="label">▸ Flight Status</div>
+            <div class="value" id="flight-status">GROUNDED</div>
+          </div>
+          <div class="hud-block">
+            <div class="label">▸ Altitude</div>
+            <div class="value"><span id="hud-alt">0</span> cm</div>
+          </div>
+        </div>
+
+        <div class="hud hud-tr">
+          <div class="hud-block">
+            <div class="label">▸ Position (cm)</div>
+            <div class="value" id="hud-pos">0, 0, 0</div>
+          </div>
+          <div class="hud-block">
+            <div class="label">▸ Heading</div>
+            <div class="value" id="hud-heading">0°</div>
+          </div>
+        </div>
+
+        <div class="hud hud-bl">
+          <div class="hud-block">
+            <div class="label">▸ Queue</div>
+            <div class="value"><span id="hud-queue">0</span> commands</div>
+          </div>
+        </div>
+
+        <div class="hud hud-br">
+          <div class="hud-block">
+            <div class="label">▸ Current Action</div>
+            <div class="value" id="hud-action">IDLE</div>
+          </div>
+          <div class="hud-block">
+            <div class="label">▸ Flight Time</div>
+            <div class="value"><span id="hud-time">0</span> s</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="splitter splitter-vertical" id="split-h"></div>
+
+  <div id="right-col">
+
+    <!-- BLOCKLY -->
+    <div class="pane" id="pane-blockly">
+      <div class="pane-header">
+        <span class="pane-title-icon">▣</span>
+        <span class="pane-title">Block Workspace <em>drag &amp; drop</em></span>
+        <span class="pane-spacer"></span>
+        <select class="editor-select" id="example-select" title="Load an example program">
+          <option value="">▾ Load Example…</option>
+        </select>
+        <button class="pane-btn" id="btn-clear-blocks" title="Clear workspace">⌫</button>
+        <button class="pane-btn" data-collapse="top" title="Collapse">▣</button>
+      </div>
+      <div class="pane-body">
+        <div class="blockly-host" id="blockly-host"></div>
+      </div>
+      <div class="pane-footer">
+        <button class="btn btn-run" id="btn-run">▶ Run</button>
+        <button class="btn btn-stop" id="btn-stop" disabled>■ Stop</button>
+        <button class="btn" id="btn-reset">⟲ Reset Drone</button>
+        <div class="speed-control">
+          <span>SPEED</span>
+          <input type="range" id="speed" min="0.25" max="4" step="0.25" value="1">
+          <span id="speed-val">1.00×</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="splitter splitter-horizontal" id="split-v"></div>
+
+    <!-- OUTPUT (Code preview + Console) -->
+    <div class="pane" id="pane-output">
+      <div class="pane-header">
+        <span class="pane-title-icon">▸</span>
+        <span class="pane-title">Output</span>
+        <div class="inline-tabs">
+          <button class="inline-tab active" data-tab="code">Generated Python</button>
+          <button class="inline-tab" data-tab="console">Console</button>
+        </div>
+        <span class="pane-spacer"></span>
+        <button class="pane-btn" id="btn-copy-code" title="Copy generated Python (paste on a real-Tello machine)">⎘</button>
+        <button class="pane-btn" id="btn-clear-console" title="Clear console">⌫</button>
+        <button class="pane-btn" data-collapse="bottom" title="Collapse">▣</button>
+      </div>
+      <div class="pane-body">
+        <div class="cm-host" id="cm-host" data-tab="code"><textarea id="code-preview"></textarea></div>
+        <div class="console-body" id="console" data-tab="console" style="display:none"></div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<div id="loading">
+  <div class="boot-screen">
+    <div class="boot-title">DRONE <span>BLOCKS</span> STUDIO</div>
+    <div class="boot-version">BLOCK-CODING EDITION</div>
+    <div class="boot-sub">// FOR YEAR 7-9 STUDENTS · NO PYTHON REQUIRED //</div>
+    <div class="boot-log" id="boot-log"></div>
+    <div class="boot-progress"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// ════════════════════════════════════════════════════════════════
+// CONFIG
+// ════════════════════════════════════════════════════════════════
+const TAKEOFF_ALT = 100;
+const DEFAULT_SPEED = 80;
+const FLIP_DURATION = 0.9;
+const ROTATE_DEG_PER_SEC = 90;
+let speedMul = 1.0;
+let followCam = false;
+
+// ════════════════════════════════════════════════════════════════
+// LOGICAL STATE (predicted post-queue, used by sensor reads)
+// ════════════════════════════════════════════════════════════════
+const logical = {
+  pos: new THREE.Vector3(0, 0.5, 0),
+  yaw: 0,
+  airborne: false,
+  speedSetting: 50,
+  flightTimeAccum: 0,
+  battery: 100,
+  temperature: 28,
+};
+const logicalForwardVec = () => new THREE.Vector3(-Math.sin(logical.yaw), 0, -Math.cos(logical.yaw));
+const logicalRightVec   = () => new THREE.Vector3(Math.cos(logical.yaw), 0, -Math.sin(logical.yaw));
+
+// ════════════════════════════════════════════════════════════════
+// BOOT LOG / CONSOLE / TOAST
+// ════════════════════════════════════════════════════════════════
+const bootLog = document.getElementById('boot-log');
+function boot(msg, delay = 0) {
+  return new Promise(r => setTimeout(() => {
+    const line = document.createElement('div');
+    line.className = 'line'; line.textContent = msg;
+    bootLog.appendChild(line);
+    bootLog.scrollTop = bootLog.scrollHeight;
+    r();
+  }, delay));
+}
+const consoleEl = document.getElementById('console');
+function log(msg, cls = '') {
+  const line = document.createElement('div');
+  line.className = 'console-line ' + cls; line.textContent = msg;
+  consoleEl.appendChild(line);
+  consoleEl.scrollTop = consoleEl.scrollHeight;
+}
+const toastEl = document.getElementById('toast');
+let toastTimer;
+function toast(msg) {
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastEl.classList.remove('show'), 1800);
+}
+
+// ════════════════════════════════════════════════════════════════
+// THREE.JS SCENE (shared with v2)
+// ════════════════════════════════════════════════════════════════
+const canvas = document.getElementById('viewport');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x03060f);
+scene.fog = new THREE.Fog(0x03060f, 400, 1500);
+
+const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 5000);
+camera.position.set(280, 220, 280);
+
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.target.set(0, 50, 0);
+controls.minDistance = 80;
+controls.maxDistance = 1500;
+
+scene.add(new THREE.AmbientLight(0x4060a0, 0.6));
+const keyLight = new THREE.DirectionalLight(0x80c8ff, 1.0);
+keyLight.position.set(200, 400, 200);
+keyLight.castShadow = true;
+keyLight.shadow.mapSize.set(1024, 1024);
+keyLight.shadow.camera.near = 50; keyLight.shadow.camera.far = 1200;
+keyLight.shadow.camera.left = -400; keyLight.shadow.camera.right = 400;
+keyLight.shadow.camera.top = 400; keyLight.shadow.camera.bottom = -400;
+scene.add(keyLight);
+const fillLight = new THREE.DirectionalLight(0xb388ff, 0.4);
+fillLight.position.set(-200, 100, -200); scene.add(fillLight);
+const rimLight = new THREE.PointLight(0x00e5ff, 1.5, 800);
+rimLight.position.set(0, 300, -300); scene.add(rimLight);
+
+const floor = new THREE.Mesh(
+  new THREE.PlaneGeometry(2000, 2000),
+  new THREE.MeshStandardMaterial({ color: 0x050a18, roughness: 0.85, metalness: 0.2 })
+);
+floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+
+const grid1 = new THREE.GridHelper(2000, 100, 0x00e5ff, 0x0a1f3a);
+grid1.material.opacity = 0.35; grid1.material.transparent = true; scene.add(grid1);
+const grid2 = new THREE.GridHelper(2000, 20, 0x00e5ff, 0x00e5ff);
+grid2.material.opacity = 0.18; grid2.material.transparent = true; scene.add(grid2);
+
+function makeAxis(dir, color) {
+  const mat = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.7 });
+  const pts = [new THREE.Vector3(0,0.5,0), new THREE.Vector3(dir.x*60, 0.5+dir.y*60, dir.z*60)];
+  return new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat);
+}
+scene.add(makeAxis(new THREE.Vector3(1,0,0), 0xff5577));
+scene.add(makeAxis(new THREE.Vector3(0,1,0), 0x5cffae));
+scene.add(makeAxis(new THREE.Vector3(0,0,-1), 0x00e5ff));
+
+const originMarker = new THREE.Mesh(
+  new THREE.RingGeometry(8, 12, 32),
+  new THREE.MeshBasicMaterial({ color: 0x00e5ff, side: THREE.DoubleSide, transparent: true, opacity: 0.6 })
+);
+originMarker.rotation.x = -Math.PI / 2; originMarker.position.y = 0.5; scene.add(originMarker);
+
+// Reference dots
+const dotGeo = new THREE.SphereGeometry(1.5, 8, 8);
+const dotMat = new THREE.MeshBasicMaterial({ color: 0x00e5ff, transparent: true, opacity: 0.4 });
+for (let i = -300; i <= 300; i += 50) {
+  if (i === 0) continue;
+  const dx = new THREE.Mesh(dotGeo, dotMat); dx.position.set(i, 1, 0); scene.add(dx);
+  const dz = new THREE.Mesh(dotGeo, dotMat); dz.position.set(0, 1, i); scene.add(dz);
+}
+
+// Drone model
+const drone = new THREE.Group();
+scene.add(drone);
+function buildDrone() {
+  const body = new THREE.Mesh(
+    new THREE.BoxGeometry(14, 4, 14),
+    new THREE.MeshStandardMaterial({ color: 0xf5f5f7, roughness: 0.4, metalness: 0.3 })
+  );
+  body.castShadow = true; drone.add(body);
+  const dome = new THREE.Mesh(
+    new THREE.SphereGeometry(2.2, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2),
+    new THREE.MeshStandardMaterial({ color: 0x222233, roughness: 0.2, metalness: 0.7 })
+  );
+  dome.position.y = 2; drone.add(dome);
+  const cam = new THREE.Mesh(
+    new THREE.CylinderGeometry(1.2, 1.2, 1.2, 16),
+    new THREE.MeshStandardMaterial({ color: 0x111122, roughness: 0.1, metalness: 0.9, emissive: 0x00e5ff, emissiveIntensity: 0.3 })
+  );
+  cam.rotation.x = Math.PI / 2; cam.position.set(0, 0, -7); drone.add(cam);
+  // Heading marker
+  const heading = new THREE.Mesh(new THREE.ConeGeometry(2, 4, 4),
+    new THREE.MeshBasicMaterial({ color: 0x5cffae }));
+  heading.rotation.x = -Math.PI / 2; heading.position.set(0, 4, -4); drone.add(heading);
+
+  const armPositions = [[10,0,10],[-10,0,10],[10,0,-10],[-10,0,-10]];
+  const propGroup = [];
+  armPositions.forEach(([x, , z]) => {
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(2, 1.5, 2),
+      new THREE.MeshStandardMaterial({ color: 0x2a2a3a, roughness: 0.5, metalness: 0.5 }));
+    arm.position.set(x * 0.65, 0, z * 0.65); drone.add(arm);
+    const motor = new THREE.Mesh(new THREE.CylinderGeometry(2, 2, 3, 12),
+      new THREE.MeshStandardMaterial({ color: 0x111118, roughness: 0.3, metalness: 0.8 }));
+    motor.position.set(x, 1.5, z); drone.add(motor);
+    const propMat = new THREE.MeshStandardMaterial({
+      color: 0xffffff, transparent: true, opacity: 0.35,
+      side: THREE.DoubleSide, emissive: 0x00e5ff, emissiveIntensity: 0.1
+    });
+    const prop = new THREE.Group();
+    prop.add(new THREE.Mesh(new THREE.BoxGeometry(11, 0.3, 1.4), propMat));
+    prop.add(new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.3, 11), propMat));
+    prop.position.set(x, 3.2, z); drone.add(prop);
+    propGroup.push(prop);
+  });
+  const led = new THREE.Mesh(new THREE.TorusGeometry(5, 0.5, 8, 24),
+    new THREE.MeshBasicMaterial({ color: 0x00e5ff, transparent: true, opacity: 0.8 }));
+  led.rotation.x = Math.PI / 2; led.position.y = -2.1; drone.add(led);
+  return { propGroup, led };
+}
+const { propGroup, led: droneLed } = buildDrone();
+drone.position.y = 0.5;
+
+// Trail
+const trailMat = new THREE.LineBasicMaterial({ color: 0x00e5ff, transparent: true, opacity: 0.7 });
+const trailPoints = [];
+let trailLine = null;
+function rebuildTrail() {
+  if (trailLine) { scene.remove(trailLine); trailLine.geometry.dispose(); }
+  if (trailPoints.length < 2) return;
+  trailLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints(trailPoints), trailMat);
+  scene.add(trailLine);
+}
+function pushTrail() {
+  const p = drone.position.clone();
+  if (trailPoints.length === 0 || trailPoints[trailPoints.length - 1].distanceTo(p) > 1.5) {
+    trailPoints.push(p); rebuildTrail();
+  }
+}
+function clearTrail() {
+  trailPoints.length = 0;
+  if (trailLine) { scene.remove(trailLine); trailLine.geometry.dispose(); trailLine = null; }
+}
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (w > 0 && h > 0 && (canvas.width !== w || canvas.height !== h)) {
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h; camera.updateProjectionMatrix();
+  }
+}
+new ResizeObserver(resize).observe(canvas);
+
+document.querySelectorAll('.view-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const v = btn.dataset.view;
+    followCam = false;
+    if (v === 'iso')   { camera.position.set(280, 220, 280); }
+    if (v === 'top')   { camera.position.set(0, 500, 0.1); }
+    if (v === 'front') { camera.position.set(0, 100, 350); }
+    if (v === 'side')  { camera.position.set(350, 100, 0); }
+    if (v === 'follow'){ followCam = true; }
+    document.querySelector('#pane-viewport .pane-title em').textContent = v;
+  });
+});
+document.getElementById('btn-reset-view').addEventListener('click', () => {
+  camera.position.set(280, 220, 280);
+  controls.target.set(0, 50, 0);
+  followCam = false;
+  document.querySelectorAll('.view-btn').forEach(b => b.classList.toggle('active', b.dataset.view === 'iso'));
+  document.querySelector('#pane-viewport .pane-title em').textContent = 'iso';
+});
+
+// ════════════════════════════════════════════════════════════════
+// ANIMATION LOOP
+// ════════════════════════════════════════════════════════════════
+let lastT = performance.now();
+let frameCount = 0; let lastFpsT = lastT;
+const fpsEl = document.getElementById('stat-fps');
+const propsSpinSpeed = { value: 0 };
+
+function animate(t) {
+  requestAnimationFrame(animate);
+  const dt = (t - lastT) / 1000; lastT = t;
+
+  propGroup.forEach((p, i) => {
+    p.rotation.y += (i % 2 === 0 ? 1 : -1) * propsSpinSpeed.value * dt;
+  });
+  const pulse = 0.5 + 0.5 * Math.sin(t * 0.005);
+  droneLed.material.opacity = 0.4 + pulse * 0.5;
+  originMarker.material.opacity = 0.4 + 0.3 * Math.sin(t * 0.002);
+  originMarker.scale.setScalar(1 + 0.05 * Math.sin(t * 0.002));
+
+  if (followCam) {
+    controls.target.lerp(drone.position, 0.08);
+    const offset = new THREE.Vector3(120, 80, 120);
+    camera.position.lerp(drone.position.clone().add(offset), 0.05);
+  }
+
+  if (logical.airborne) {
+    logical.flightTimeAccum += dt;
+    logical.battery = Math.max(0, Math.round(100 - logical.flightTimeAccum / 7.8));
+  }
+
+  controls.update(); resize();
+  renderer.render(scene, camera);
+
+  frameCount++;
+  if (t - lastFpsT > 500) {
+    fpsEl.textContent = Math.round(frameCount * 1000 / (t - lastFpsT));
+    frameCount = 0; lastFpsT = t;
+  }
+  document.getElementById('stat-battery').textContent = logical.battery + '%';
+  const batEl = document.getElementById('stat-battery');
+  batEl.className = ''; if (logical.battery < 20) batEl.className = 'crit';
+  else if (logical.battery < 40) batEl.className = 'warn';
+  document.getElementById('hud-time').textContent = Math.round(logical.flightTimeAccum);
+}
+requestAnimationFrame(animate);
+
+// ════════════════════════════════════════════════════════════════
+// COMMAND QUEUE & ANIMATIONS
+// ════════════════════════════════════════════════════════════════
+const commandQueue = [];
+let isPlaying = false;
+let stopRequested = false;
+let isAirborne = false;
+
+function updateHud() {
+  const x = Math.round(drone.position.x);
+  const z = -Math.round(drone.position.z);
+  const y = Math.round(drone.position.y);
+  document.getElementById('hud-pos').textContent = `${x}, ${z}, ${y}`;
+  document.getElementById('hud-alt').textContent = y;
+  document.getElementById('hud-queue').textContent = commandQueue.length;
+  let yaw = THREE.MathUtils.radToDeg(drone.rotation.y);
+  yaw = ((yaw % 360) + 360) % 360;
+  document.getElementById('hud-heading').textContent = `${Math.round(yaw)}°`;
+  const fs = document.getElementById('flight-status');
+  if (isAirborne) { fs.textContent = 'AIRBORNE'; fs.parentElement.classList.add('armed'); }
+  else { fs.textContent = 'GROUNDED'; fs.parentElement.classList.remove('armed'); }
+}
+function setAction(text) { document.getElementById('hud-action').textContent = text; }
+function setStatus(text) { document.getElementById('status-text').textContent = text; }
+
+const easeInOut = t => t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2) / 2;
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function animatePath(targetGetter, durationSec, label) {
+  setAction(label);
+  const start = drone.position.clone();
+  const target = targetGetter(start);
+  const duration = Math.max(0.25, durationSec) * 1000 / speedMul;
+  propsSpinSpeed.value = 40;
+  const t0 = performance.now();
+  while (true) {
+    if (stopRequested) { propsSpinSpeed.value = isAirborne ? 8 : 0; return; }
+    const elapsed = performance.now() - t0;
+    const t = Math.min(1, elapsed / duration);
+    const e = easeInOut(t);
+    drone.position.set(
+      start.x + (target.x - start.x) * e,
+      start.y + (target.y - start.y) * e,
+      start.z + (target.z - start.z) * e,
+    );
+    pushTrail(); updateHud();
+    if (t >= 1) break;
+    await sleep(16);
+  }
+  propsSpinSpeed.value = isAirborne ? 8 : 0;
+  setAction('IDLE');
+}
+
+async function animateCurve(p0, p1, p2, durationSec, label) {
+  setAction(label);
+  const duration = Math.max(0.4, durationSec) * 1000 / speedMul;
+  propsSpinSpeed.value = 40;
+  const t0 = performance.now();
+  while (true) {
+    if (stopRequested) { propsSpinSpeed.value = isAirborne ? 8 : 0; return; }
+    const elapsed = performance.now() - t0;
+    const t = Math.min(1, elapsed / duration);
+    const e = easeInOut(t);
+    const u = 1 - e;
+    drone.position.set(
+      u*u*p0.x + 2*u*e*p1.x + e*e*p2.x,
+      u*u*p0.y + 2*u*e*p1.y + e*e*p2.y,
+      u*u*p0.z + 2*u*e*p1.z + e*e*p2.z,
+    );
+    pushTrail(); updateHud();
+    if (t >= 1) break;
+    await sleep(16);
+  }
+  propsSpinSpeed.value = isAirborne ? 8 : 0;
+  setAction('IDLE');
+}
+
+async function animateRotation(deltaRad, durationSec, label) {
+  setAction(label);
+  const start = drone.rotation.y;
+  const duration = Math.max(0.25, durationSec) * 1000 / speedMul;
+  propsSpinSpeed.value = 25;
+  const t0 = performance.now();
+  while (true) {
+    if (stopRequested) { propsSpinSpeed.value = isAirborne ? 8 : 0; return; }
+    const elapsed = performance.now() - t0;
+    const t = Math.min(1, elapsed / duration);
+    const e = easeInOut(t);
+    drone.rotation.y = start + deltaRad * e;
+    updateHud();
+    if (t >= 1) break;
+    await sleep(16);
+  }
+  propsSpinSpeed.value = isAirborne ? 8 : 0;
+  setAction('IDLE');
+}
+
+async function animateFlip(axis, label) {
+  if (!isAirborne) { log('Cannot flip — drone is grounded. Use "take off" first.', 'warn'); return; }
+  setAction(label);
+  const duration = FLIP_DURATION * 1000 / speedMul;
+  const startRot = drone.rotation.clone();
+  propsSpinSpeed.value = 60;
+  const t0 = performance.now();
+  while (true) {
+    if (stopRequested) { propsSpinSpeed.value = 8; return; }
+    const elapsed = performance.now() - t0;
+    const t = Math.min(1, elapsed / duration);
+    const e = easeInOut(t);
+    const angle = e * Math.PI * 2;
+    if (axis === 'x') drone.rotation.x = startRot.x + angle;
+    if (axis === '-x') drone.rotation.x = startRot.x - angle;
+    if (axis === 'z') drone.rotation.z = startRot.z + angle;
+    if (axis === '-z') drone.rotation.z = startRot.z - angle;
+    if (t >= 1) {
+      drone.rotation.x = startRot.x;
+      drone.rotation.z = startRot.z;
+      break;
+    }
+    await sleep(16);
+  }
+  propsSpinSpeed.value = 8;
+  setAction('IDLE');
+}
+
+const cmds = {
+  async connect() {
+    log('tello.connect()', 'cmd');
+    setAction('CONNECT');
+    await sleep(300 / speedMul);
+    log('connected (sim) — battery: ' + logical.battery + '%', 'ok');
+    setAction('IDLE');
+  },
+  async end() {
+    log('tello.end()', 'cmd');
+    if (isAirborne) await cmds.land();
+    log('session ended', 'ok');
+  },
+  async takeoff() {
+    if (isAirborne) { log('Already airborne.', 'warn'); return; }
+    log('tello.takeoff()', 'cmd');
+    isAirborne = true;
+    propsSpinSpeed.value = 8;
+    await animatePath(p => new THREE.Vector3(p.x, TAKEOFF_ALT, p.z),
+                      TAKEOFF_ALT / DEFAULT_SPEED, 'TAKEOFF');
+    log('takeoff complete · alt 100cm', 'ok');
+  },
+  async land() {
+    if (!isAirborne) { log('Already on the ground.', 'warn'); return; }
+    log('tello.land()', 'cmd');
+    await animatePath(p => new THREE.Vector3(p.x, 0.5, p.z),
+                      drone.position.y / DEFAULT_SPEED, 'LAND');
+    isAirborne = false; propsSpinSpeed.value = 0;
+    log('landed safely', 'ok');
+  },
+  async emergency() {
+    log('tello.emergency() — MOTORS OFF', 'warn');
+    setAction('EMERGENCY');
+    propsSpinSpeed.value = 0;
+    drone.position.y = 0.5;
+    isAirborne = false;
+    pushTrail(); updateHud();
+    await sleep(300);
+    setAction('IDLE');
+    log('motors stopped — drone on ground', 'ok');
+  },
+  async move_forward(x_cm, speed) {
+    log(`tello.move_forward(${x_cm})`, 'cmd');
+    const yaw = drone.rotation.y;
+    const fwd = new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
+    const target = drone.position.clone().add(fwd.multiplyScalar(x_cm));
+    await animatePath(() => target, x_cm / speed, `FORWARD ${x_cm}cm`);
+  },
+  async move_back(x_cm, speed) {
+    log(`tello.move_back(${x_cm})`, 'cmd');
+    const yaw = drone.rotation.y;
+    const fwd = new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
+    const target = drone.position.clone().add(fwd.multiplyScalar(-x_cm));
+    await animatePath(() => target, x_cm / speed, `BACK ${x_cm}cm`);
+  },
+  async move_left(x_cm, speed) {
+    log(`tello.move_left(${x_cm})`, 'cmd');
+    const yaw = drone.rotation.y;
+    const right = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
+    const target = drone.position.clone().add(right.multiplyScalar(-x_cm));
+    await animatePath(() => target, x_cm / speed, `LEFT ${x_cm}cm`);
+  },
+  async move_right(x_cm, speed) {
+    log(`tello.move_right(${x_cm})`, 'cmd');
+    const yaw = drone.rotation.y;
+    const right = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
+    const target = drone.position.clone().add(right.multiplyScalar(x_cm));
+    await animatePath(() => target, x_cm / speed, `RIGHT ${x_cm}cm`);
+  },
+  async move_up(x_cm, speed) {
+    log(`tello.move_up(${x_cm})`, 'cmd');
+    await animatePath(p => new THREE.Vector3(p.x, p.y + x_cm, p.z), x_cm / speed, `UP ${x_cm}cm`);
+  },
+  async move_down(x_cm, speed) {
+    log(`tello.move_down(${x_cm})`, 'cmd');
+    await animatePath(p => new THREE.Vector3(p.x, Math.max(0.5, p.y - x_cm), p.z),
+                      x_cm / speed, `DOWN ${x_cm}cm`);
+  },
+  async rotate_clockwise(deg) {
+    log(`tello.rotate_clockwise(${deg})`, 'cmd');
+    await animateRotation(-deg * Math.PI / 180, deg / ROTATE_DEG_PER_SEC, `CW ${deg}°`);
+  },
+  async rotate_counter_clockwise(deg) {
+    log(`tello.rotate_counter_clockwise(${deg})`, 'cmd');
+    await animateRotation(deg * Math.PI / 180, deg / ROTATE_DEG_PER_SEC, `CCW ${deg}°`);
+  },
+  async go_xyz_speed(x, y, z, speed) {
+    log(`tello.go_xyz_speed(${x}, ${y}, ${z}, ${speed})`, 'cmd');
+    const yaw = drone.rotation.y;
+    const fwd = new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
+    const left = new THREE.Vector3(-Math.cos(yaw), 0, Math.sin(yaw));
+    const up = new THREE.Vector3(0, 1, 0);
+    const delta = fwd.multiplyScalar(x).add(left.multiplyScalar(y)).add(up.multiplyScalar(z));
+    const target = drone.position.clone().add(delta);
+    await animatePath(() => target, delta.length() / speed, `GO (${x},${y},${z})`);
+  },
+  async curve_xyz_speed(x1, y1, z1, x2, y2, z2, speed) {
+    log(`tello.curve_xyz_speed(${x1},${y1},${z1}, ${x2},${y2},${z2}, ${speed})`, 'cmd');
+    const yaw = drone.rotation.y;
+    const fwd = new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
+    const left = new THREE.Vector3(-Math.cos(yaw), 0, Math.sin(yaw));
+    const up = new THREE.Vector3(0, 1, 0);
+    const p0 = drone.position.clone();
+    const p1 = p0.clone()
+      .add(fwd.clone().multiplyScalar(x1))
+      .add(left.clone().multiplyScalar(y1))
+      .add(up.clone().multiplyScalar(z1));
+    const p2 = p0.clone()
+      .add(fwd.clone().multiplyScalar(x2))
+      .add(left.clone().multiplyScalar(y2))
+      .add(up.clone().multiplyScalar(z2));
+    const dist = p0.distanceTo(p1) + p1.distanceTo(p2);
+    await animateCurve(p0, p1, p2, dist / speed, 'CURVE');
+  },
+  async flip_forward()  { log('tello.flip_forward()',  'cmd'); await animateFlip('-x', 'FLIP FORWARD');  },
+  async flip_back()     { log('tello.flip_back()',     'cmd'); await animateFlip('x',  'FLIP BACK');     },
+  async flip_left()     { log('tello.flip_left()',     'cmd'); await animateFlip('-z', 'FLIP LEFT');     },
+  async flip_right()    { log('tello.flip_right()',    'cmd'); await animateFlip('z',  'FLIP RIGHT');    },
+};
+
+function enqueue(name, args) {
+  commandQueue.push({ name, args });
+  updateHud();
+  if (!isPlaying) runQueue();
+}
+async function runQueue() {
+  if (isPlaying) return;
+  isPlaying = true;
+  setStatus('FLYING');
+  document.getElementById('btn-stop').disabled = false;
+  while (commandQueue.length > 0) {
+    if (stopRequested) break;
+    const { name, args } = commandQueue.shift();
+    updateHud();
+    try { await cmds[name](...args); }
+    catch (e) { log(`Error in ${name}: ${e.message}`, 'err'); }
+  }
+  isPlaying = false; stopRequested = false;
+  document.getElementById('btn-stop').disabled = true;
+  setStatus('READY'); setAction('IDLE'); updateHud();
+}
+
+// Logical state updater (synchronous, on enqueue) so sensor reads return realistic values
+function updateLogical(name, args) {
+  if (name === 'takeoff') {
+    if (!logical.airborne) {
+      logical.airborne = true;
+      logical.flightTimeAccum = 0;
+      logical.pos.y = TAKEOFF_ALT;
+    }
+  } else if (name === 'land' || name === 'emergency') {
+    if (logical.airborne) { logical.airborne = false; logical.pos.y = 0.5; }
+  }
+  else if (name === 'move_forward') logical.pos.add(logicalForwardVec().multiplyScalar(args[0]));
+  else if (name === 'move_back')    logical.pos.add(logicalForwardVec().multiplyScalar(-args[0]));
+  else if (name === 'move_left')    logical.pos.add(logicalRightVec().multiplyScalar(-args[0]));
+  else if (name === 'move_right')   logical.pos.add(logicalRightVec().multiplyScalar(args[0]));
+  else if (name === 'move_up')      logical.pos.y += args[0];
+  else if (name === 'move_down')    logical.pos.y = Math.max(0.5, logical.pos.y - args[0]);
+  else if (name === 'rotate_clockwise')         logical.yaw -= args[0] * Math.PI / 180;
+  else if (name === 'rotate_counter_clockwise') logical.yaw += args[0] * Math.PI / 180;
+  else if (name === 'go_xyz_speed') {
+    const yaw = logical.yaw;
+    const fwd = new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
+    const left = new THREE.Vector3(-Math.cos(yaw), 0, Math.sin(yaw));
+    const up = new THREE.Vector3(0, 1, 0);
+    logical.pos.add(fwd.multiplyScalar(args[0]))
+              .add(left.multiplyScalar(args[1]))
+              .add(up.multiplyScalar(args[2]));
+  }
+  else if (name === 'curve_xyz_speed') {
+    const yaw = logical.yaw;
+    const fwd = new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
+    const left = new THREE.Vector3(-Math.cos(yaw), 0, Math.sin(yaw));
+    const up = new THREE.Vector3(0, 1, 0);
+    logical.pos.add(fwd.multiplyScalar(args[3]))
+              .add(left.multiplyScalar(args[4]))
+              .add(up.multiplyScalar(args[5]));
+  }
+}
+
+function emit(name, args) { updateLogical(name, args); enqueue(name, args); }
+
+// JS bridge that the Python djitellopy stub calls into
+window.__droneBridge = {
+  dji_connect:    () => emit('connect', []),
+  dji_end:        () => emit('end', []),
+  dji_takeoff:    () => emit('takeoff', []),
+  dji_land:       () => emit('land', []),
+  dji_emergency:  () => emit('emergency', []),
+  dji_move_forward: (x) => emit('move_forward', [x, logical.speedSetting]),
+  dji_move_back:    (x) => emit('move_back',    [x, logical.speedSetting]),
+  dji_move_left:    (x) => emit('move_left',    [x, logical.speedSetting]),
+  dji_move_right:   (x) => emit('move_right',   [x, logical.speedSetting]),
+  dji_move_up:      (x) => emit('move_up',      [x, logical.speedSetting]),
+  dji_move_down:    (x) => emit('move_down',    [x, logical.speedSetting]),
+  dji_rotate_cw:    (x) => emit('rotate_clockwise',         [x]),
+  dji_rotate_ccw:   (x) => emit('rotate_counter_clockwise', [x]),
+  dji_go_xyz_speed: (x, y, z, s) => emit('go_xyz_speed',    [x, y, z, s]),
+  dji_curve_xyz_speed: (x1,y1,z1,x2,y2,z2,s) => emit('curve_xyz_speed', [x1,y1,z1,x2,y2,z2,s]),
+  dji_flip_forward: () => emit('flip_forward', []),
+  dji_flip_back:    () => emit('flip_back',    []),
+  dji_flip_left:    () => emit('flip_left',    []),
+  dji_flip_right:   () => emit('flip_right',   []),
+  dji_set_speed:    (x) => { logical.speedSetting = Math.max(10, Math.min(100, x)); log(`set_speed(${x}) — sim speed = ${logical.speedSetting} cm/s`, 'cmd'); },
+
+  dji_get_battery:     () => Math.round(logical.battery),
+  dji_get_height:      () => Math.round(logical.pos.y),
+  dji_get_temperature: () => logical.temperature + Math.round(Math.random() * 4 - 2),
+  dji_get_yaw: () => {
+    let d = THREE.MathUtils.radToDeg(logical.yaw);
+    d = Math.round(((d % 360) + 360) % 360);
+    if (d > 180) d -= 360;
+    return d;
+  },
+  dji_get_distance_tof: () => Math.max(10, Math.round(logical.pos.y)),
+  dji_get_flight_time:  () => Math.round(logical.flightTimeAccum),
+
+  print: (msg) => log(String(msg), 'print'),
+};
+
+// ════════════════════════════════════════════════════════════════
+// PYODIDE + djitellopy stub
+// ════════════════════════════════════════════════════════════════
+let pyodide = null;
+async function initPyodide() {
+  await boot('▸ Loading Pyodide runtime...', 100);
+  pyodide = await loadPyodide({
+    indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.26.4/full/',
+    stdout: (msg) => log(msg, 'print'),
+    stderr: (msg) => log(msg, 'err'),
+  });
+  await boot('▸ Pyodide loaded ✓', 200);
+  await boot('▸ Registering djitellopy stub...', 100);
+
+  await pyodide.runPythonAsync(`
+import sys, types, js
+_b = js.window.__droneBridge
+
+class TelloException(Exception):
+    pass
+
+def _check_range(value, lo, hi, name):
+    if value < lo or value > hi:
+        raise TelloException(name + "=" + str(value) + " out of range " + str(lo) + ".." + str(hi))
+
+class Tello:
+    """Simulator stub mirroring djitellopy.Tello."""
+    TELLO_IP = '192.168.10.1'
+    is_flying = False
+
+    def __init__(self, host=TELLO_IP, retry_count=3, vs_udp=11111):
+        self.host = host
+
+    def connect(self, wait_for_state=True):  _b.dji_connect()
+    def end(self):
+        if self.is_flying: self.land()
+        _b.dji_end()
+
+    def takeoff(self): _b.dji_takeoff(); Tello.is_flying = True
+    def land(self):    _b.dji_land();    Tello.is_flying = False
+    def emergency(self): _b.dji_emergency(); Tello.is_flying = False
+
+    def move_forward(self, x): _check_range(x, 20, 500, 'x'); _b.dji_move_forward(x)
+    def move_back(self, x):    _check_range(x, 20, 500, 'x'); _b.dji_move_back(x)
+    def move_left(self, x):    _check_range(x, 20, 500, 'x'); _b.dji_move_left(x)
+    def move_right(self, x):   _check_range(x, 20, 500, 'x'); _b.dji_move_right(x)
+    def move_up(self, x):      _check_range(x, 20, 500, 'x'); _b.dji_move_up(x)
+    def move_down(self, x):    _check_range(x, 20, 500, 'x'); _b.dji_move_down(x)
+
+    def rotate_clockwise(self, x):         _check_range(x, 1, 360, 'x'); _b.dji_rotate_cw(x)
+    def rotate_counter_clockwise(self, x): _check_range(x, 1, 360, 'x'); _b.dji_rotate_ccw(x)
+
+    def go_xyz_speed(self, x, y, z, speed):
+        for v, n in [(x,'x'),(y,'y'),(z,'z')]: _check_range(v, -500, 500, n)
+        _check_range(speed, 10, 100, 'speed')
+        _b.dji_go_xyz_speed(x, y, z, speed)
+    def curve_xyz_speed(self, x1, y1, z1, x2, y2, z2, speed):
+        for v, n in [(x1,'x1'),(y1,'y1'),(z1,'z1'),(x2,'x2'),(y2,'y2'),(z2,'z2')]:
+            _check_range(v, -500, 500, n)
+        _check_range(speed, 10, 60, 'speed')
+        _b.dji_curve_xyz_speed(x1, y1, z1, x2, y2, z2, speed)
+
+    def flip_forward(self): _b.dji_flip_forward()
+    def flip_back(self):    _b.dji_flip_back()
+    def flip_left(self):    _b.dji_flip_left()
+    def flip_right(self):   _b.dji_flip_right()
+
+    def set_speed(self, x): _check_range(x, 10, 100, 'x'); _b.dji_set_speed(x)
+
+    def get_battery(self):       return int(_b.dji_get_battery())
+    def get_height(self):        return int(_b.dji_get_height())
+    def get_temperature(self):   return float(_b.dji_get_temperature())
+    def get_yaw(self):           return int(_b.dji_get_yaw())
+    def get_distance_tof(self):  return int(_b.dji_get_distance_tof())
+    def get_flight_time(self):   return int(_b.dji_get_flight_time())
+
+_dji = types.ModuleType('djitellopy')
+_dji.Tello = Tello
+_dji.TelloException = TelloException
+sys.modules['djitellopy'] = _dji
+print("djitellopy stub ready.")
+`);
+  await boot('▸ djitellopy registered ✓', 100);
+}
+
+// ════════════════════════════════════════════════════════════════
+// BLOCKLY — block definitions
+// ════════════════════════════════════════════════════════════════
+const COL_FLIGHT  = '#ff5577';
+const COL_EMERG   = '#ff3333';
+const COL_MOVE    = '#3b8eea';
+const COL_ROTATE  = '#5cffae';
+const COL_COORD   = '#b388ff';
+const COL_FLIP    = '#ec407a';
+const COL_SENSOR  = '#fbc02d';
+const COL_SETTING = '#7e57c2';
+
+Blockly.defineBlocksWithJsonArray([
+  // ── Flight ──
+  { type: 'tello_takeoff',   message0: '🛫 take off',
+    previousStatement: null, nextStatement: null, colour: COL_FLIGHT,
+    tooltip: 'Lift off and hover at about 1m.' },
+  { type: 'tello_land',      message0: '🛬 land',
+    previousStatement: null, nextStatement: null, colour: COL_FLIGHT,
+    tooltip: 'Descend gently and stop the motors.' },
+  { type: 'tello_emergency', message0: '🛑 emergency stop',
+    previousStatement: null, nextStatement: null, colour: COL_EMERG,
+    tooltip: 'INSTANTLY cuts the motors. Drone falls. Use only if unsafe.' },
+
+  // ── Move (note: SDK constraint 20-500 cm) ──
+  { type: 'tello_move_forward', message0: '↑ move forward %1 cm',
+    args0: [{ type: 'field_number', name: 'D', value: 50, min: 20, max: 500 }],
+    previousStatement: null, nextStatement: null, colour: COL_MOVE,
+    tooltip: "Move forward in the drone's current heading. 20–500 cm." },
+  { type: 'tello_move_back', message0: '↓ move back %1 cm',
+    args0: [{ type: 'field_number', name: 'D', value: 50, min: 20, max: 500 }],
+    previousStatement: null, nextStatement: null, colour: COL_MOVE },
+  { type: 'tello_move_left', message0: '← move left %1 cm',
+    args0: [{ type: 'field_number', name: 'D', value: 50, min: 20, max: 500 }],
+    previousStatement: null, nextStatement: null, colour: COL_MOVE },
+  { type: 'tello_move_right', message0: '→ move right %1 cm',
+    args0: [{ type: 'field_number', name: 'D', value: 50, min: 20, max: 500 }],
+    previousStatement: null, nextStatement: null, colour: COL_MOVE },
+  { type: 'tello_move_up', message0: '🔼 move up %1 cm',
+    args0: [{ type: 'field_number', name: 'D', value: 50, min: 20, max: 500 }],
+    previousStatement: null, nextStatement: null, colour: COL_MOVE },
+  { type: 'tello_move_down', message0: '🔽 move down %1 cm',
+    args0: [{ type: 'field_number', name: 'D', value: 50, min: 20, max: 500 }],
+    previousStatement: null, nextStatement: null, colour: COL_MOVE },
+
+  // ── Rotate ──
+  { type: 'tello_rotate_cw', message0: '↻ rotate clockwise %1 °',
+    args0: [{ type: 'field_number', name: 'A', value: 90, min: 1, max: 360 }],
+    previousStatement: null, nextStatement: null, colour: COL_ROTATE,
+    tooltip: 'Yaw right by N degrees (1–360).' },
+  { type: 'tello_rotate_ccw', message0: '↺ rotate counter-clockwise %1 °',
+    args0: [{ type: 'field_number', name: 'A', value: 90, min: 1, max: 360 }],
+    previousStatement: null, nextStatement: null, colour: COL_ROTATE,
+    tooltip: 'Yaw left by N degrees (1–360).' },
+
+  // ── Coordinated flight ──
+  { type: 'tello_go_xyz_speed',
+    message0: '🎯 go to  x %1  y %2  z %3   at speed %4 cm/s',
+    args0: [
+      { type: 'field_number', name: 'X', value: 100, min: -500, max: 500 },
+      { type: 'field_number', name: 'Y', value: 0,   min: -500, max: 500 },
+      { type: 'field_number', name: 'Z', value: 50,  min: -500, max: 500 },
+      { type: 'field_number', name: 'S', value: 60,  min: 10,   max: 100 },
+    ],
+    previousStatement: null, nextStatement: null, colour: COL_COORD,
+    tooltip: 'Fly to a 3D point relative to current position. Local frame: x=fwd, y=left, z=up.' },
+  { type: 'tello_curve_xyz_speed',
+    message0: '〰 curve via (x %1 y %2 z %3) to (x %4 y %5 z %6) at speed %7',
+    args0: [
+      { type: 'field_number', name: 'X1', value: 50,  min: -500, max: 500 },
+      { type: 'field_number', name: 'Y1', value: 50,  min: -500, max: 500 },
+      { type: 'field_number', name: 'Z1', value: 0,   min: -500, max: 500 },
+      { type: 'field_number', name: 'X2', value: 100, min: -500, max: 500 },
+      { type: 'field_number', name: 'Y2', value: 0,   min: -500, max: 500 },
+      { type: 'field_number', name: 'Z2', value: 0,   min: -500, max: 500 },
+      { type: 'field_number', name: 'S',  value: 30,  min: 10,   max: 60  },
+    ],
+    previousStatement: null, nextStatement: null, colour: COL_COORD,
+    tooltip: 'Curved arc via midpoint to endpoint. Speed 10–60 cm/s.' },
+  { type: 'tello_set_speed', message0: '⚙ set default speed to %1 cm/s',
+    args0: [{ type: 'field_number', name: 'S', value: 50, min: 10, max: 100 }],
+    previousStatement: null, nextStatement: null, colour: COL_SETTING,
+    tooltip: 'Default movement speed for move_* commands.' },
+
+  // ── Flips ──
+  { type: 'tello_flip_forward', message0: '🔄 flip forward',
+    previousStatement: null, nextStatement: null, colour: COL_FLIP,
+    tooltip: 'Forward flip. Real Tello requires battery > 50%.' },
+  { type: 'tello_flip_back',    message0: '🔄 flip back',
+    previousStatement: null, nextStatement: null, colour: COL_FLIP },
+  { type: 'tello_flip_left',    message0: '🔄 flip left',
+    previousStatement: null, nextStatement: null, colour: COL_FLIP },
+  { type: 'tello_flip_right',   message0: '🔄 flip right',
+    previousStatement: null, nextStatement: null, colour: COL_FLIP },
+
+  // ── Sensors (return values — round, no top/bottom notches) ──
+  { type: 'tello_get_battery',     message0: '🔋 battery %', output: 'Number',
+    colour: COL_SENSOR, tooltip: 'Battery percentage (0–100).' },
+  { type: 'tello_get_height',      message0: '📏 height (cm)', output: 'Number',
+    colour: COL_SENSOR, tooltip: 'Current height above the takeoff floor.' },
+  { type: 'tello_get_temperature', message0: '🌡 temperature (°C)', output: 'Number',
+    colour: COL_SENSOR },
+  { type: 'tello_get_yaw',         message0: '🧭 yaw (°)', output: 'Number',
+    colour: COL_SENSOR, tooltip: 'Heading angle, -180 to 180.' },
+  { type: 'tello_get_flight_time', message0: '⏱ flight time (s)', output: 'Number',
+    colour: COL_SENSOR },
+  { type: 'tello_get_distance_tof', message0: '📡 distance to ground (cm)', output: 'Number',
+    colour: COL_SENSOR },
+]);
+
+// ════════════════════════════════════════════════════════════════
+// PYTHON GENERATORS
+// ════════════════════════════════════════════════════════════════
+const py = Blockly.Python;
+// In Blockly 11, generator handlers live on .forBlock
+const G = py.forBlock || py;   // fallback for older versions
+
+G['tello_takeoff']   = () => 'tello.takeoff()\n';
+G['tello_land']      = () => 'tello.land()\n';
+G['tello_emergency'] = () => 'tello.emergency()\n';
+
+['forward', 'back', 'left', 'right', 'up', 'down'].forEach(dir => {
+  G[`tello_move_${dir}`] = function(block) {
+    return `tello.move_${dir}(${block.getFieldValue('D')})\n`;
+  };
+});
+
+G['tello_rotate_cw']  = b => `tello.rotate_clockwise(${b.getFieldValue('A')})\n`;
+G['tello_rotate_ccw'] = b => `tello.rotate_counter_clockwise(${b.getFieldValue('A')})\n`;
+
+G['tello_go_xyz_speed'] = b =>
+  `tello.go_xyz_speed(${b.getFieldValue('X')}, ${b.getFieldValue('Y')}, ${b.getFieldValue('Z')}, ${b.getFieldValue('S')})\n`;
+G['tello_curve_xyz_speed'] = b =>
+  `tello.curve_xyz_speed(${b.getFieldValue('X1')}, ${b.getFieldValue('Y1')}, ${b.getFieldValue('Z1')}, ` +
+  `${b.getFieldValue('X2')}, ${b.getFieldValue('Y2')}, ${b.getFieldValue('Z2')}, ${b.getFieldValue('S')})\n`;
+G['tello_set_speed'] = b => `tello.set_speed(${b.getFieldValue('S')})\n`;
+
+['forward', 'back', 'left', 'right'].forEach(dir => {
+  G[`tello_flip_${dir}`] = () => `tello.flip_${dir}()\n`;
+});
+
+const FN_ORDER = py.ORDER_FUNCTION_CALL ?? 2;
+G['tello_get_battery']      = () => ['tello.get_battery()',      FN_ORDER];
+G['tello_get_height']       = () => ['tello.get_height()',       FN_ORDER];
+G['tello_get_temperature']  = () => ['tello.get_temperature()',  FN_ORDER];
+G['tello_get_yaw']          = () => ['tello.get_yaw()',          FN_ORDER];
+G['tello_get_flight_time']  = () => ['tello.get_flight_time()',  FN_ORDER];
+G['tello_get_distance_tof'] = () => ['tello.get_distance_tof()', FN_ORDER];
+
+// ════════════════════════════════════════════════════════════════
+// TOOLBOX
+// ════════════════════════════════════════════════════════════════
+const TOOLBOX = {
+  kind: 'categoryToolbox',
+  contents: [
+    { kind: 'category', name: '🛩 Flight Control', colour: COL_FLIGHT, contents: [
+      { kind: 'block', type: 'tello_takeoff' },
+      { kind: 'block', type: 'tello_land' },
+      { kind: 'block', type: 'tello_emergency' },
+    ]},
+    { kind: 'category', name: '➡ Move', colour: COL_MOVE, contents: [
+      { kind: 'block', type: 'tello_move_forward' },
+      { kind: 'block', type: 'tello_move_back' },
+      { kind: 'block', type: 'tello_move_left' },
+      { kind: 'block', type: 'tello_move_right' },
+      { kind: 'block', type: 'tello_move_up' },
+      { kind: 'block', type: 'tello_move_down' },
+    ]},
+    { kind: 'category', name: '↻ Rotate', colour: COL_ROTATE, contents: [
+      { kind: 'block', type: 'tello_rotate_cw' },
+      { kind: 'block', type: 'tello_rotate_ccw' },
+    ]},
+    { kind: 'category', name: '🎯 Coordinated', colour: COL_COORD, contents: [
+      { kind: 'block', type: 'tello_go_xyz_speed' },
+      { kind: 'block', type: 'tello_curve_xyz_speed' },
+      { kind: 'block', type: 'tello_set_speed' },
+    ]},
+    { kind: 'category', name: '🔄 Flips', colour: COL_FLIP, contents: [
+      { kind: 'block', type: 'tello_flip_forward' },
+      { kind: 'block', type: 'tello_flip_back' },
+      { kind: 'block', type: 'tello_flip_left' },
+      { kind: 'block', type: 'tello_flip_right' },
+    ]},
+    { kind: 'category', name: '🔋 Sensors', colour: COL_SENSOR, contents: [
+      { kind: 'block', type: 'tello_get_battery' },
+      { kind: 'block', type: 'tello_get_height' },
+      { kind: 'block', type: 'tello_get_temperature' },
+      { kind: 'block', type: 'tello_get_yaw' },
+      { kind: 'block', type: 'tello_get_flight_time' },
+      { kind: 'block', type: 'tello_get_distance_tof' },
+    ]},
+    { kind: 'sep' },
+    { kind: 'category', name: '🔁 Loops', colour: '#5ba9c7', contents: [
+      { kind: 'block', type: 'controls_repeat_ext',
+        inputs: { TIMES: { shadow: { type: 'math_number', fields: { NUM: 4 } } } } },
+      { kind: 'block', type: 'controls_whileUntil' },
+    ]},
+    { kind: 'category', name: '❓ Logic', colour: '#5b80a5', contents: [
+      { kind: 'block', type: 'controls_if' },
+      { kind: 'block', type: 'logic_compare' },
+      { kind: 'block', type: 'logic_operation' },
+      { kind: 'block', type: 'logic_negate' },
+      { kind: 'block', type: 'logic_boolean' },
+    ]},
+    { kind: 'category', name: '🔢 Math', colour: '#5b67a5', contents: [
+      { kind: 'block', type: 'math_number' },
+      { kind: 'block', type: 'math_arithmetic' },
+      { kind: 'block', type: 'math_random_int',
+        inputs: {
+          FROM: { shadow: { type: 'math_number', fields: { NUM: 1 } } },
+          TO:   { shadow: { type: 'math_number', fields: { NUM: 100 } } }
+        }},
+    ]},
+    { kind: 'category', name: '📝 Text', colour: '#5ba58c', contents: [
+      { kind: 'block', type: 'text' },
+      { kind: 'block', type: 'text_print',
+        inputs: { TEXT: { shadow: { type: 'text', fields: { TEXT: 'hello' } } } } },
+    ]},
+    { kind: 'category', name: '📦 Variables', colour: '#a55b80', custom: 'VARIABLE' },
+  ]
+};
+
+// ════════════════════════════════════════════════════════════════
+// EXAMPLE WORKSPACES (Blockly serialization JSON)
+// ════════════════════════════════════════════════════════════════
+const EXAMPLES = {
+  hello: {
+    name: '👋 Hello Drone (basic)',
+    state: { blocks: { languageVersion: 0, blocks: [
+      { type: 'tello_takeoff', x: 40, y: 40,
+        next: { block: { type: 'tello_move_up', fields: { D: 50 },
+          next: { block: { type: 'tello_land' } } } } }
+    ] } }
+  },
+  square: {
+    name: '⬛ Square (repeat loop)',
+    state: { blocks: { languageVersion: 0, blocks: [
+      { type: 'tello_takeoff', x: 40, y: 40, next: { block: {
+        type: 'controls_repeat_ext',
+        inputs: {
+          TIMES: { shadow: { type: 'math_number', fields: { NUM: 4 } } },
+          DO: { block: {
+            type: 'tello_move_forward', fields: { D: 80 },
+            next: { block: { type: 'tello_rotate_cw', fields: { A: 90 } } }
+          } }
+        },
+        next: { block: { type: 'tello_land' } }
+      } } }
+    ] } }
+  },
+  climb: {
+    name: '⛰ Climb until target (while + sensor)',
+    state: { blocks: { languageVersion: 0, blocks: [
+      { type: 'tello_takeoff', x: 40, y: 40, next: { block: {
+        type: 'controls_whileUntil',
+        fields: { MODE: 'WHILE' },
+        inputs: {
+          BOOL: { block: {
+            type: 'logic_compare', fields: { OP: 'LT' },
+            inputs: {
+              A: { block: { type: 'tello_get_height' } },
+              B: { shadow: { type: 'math_number', fields: { NUM: 200 } } }
+            }
+          } },
+          DO: { block: {
+            type: 'tello_move_up', fields: { D: 30 },
+            next: { block: {
+              type: 'text_print',
+              inputs: { TEXT: { shadow: { type: 'text', fields: { TEXT: 'climbing...' } } } }
+            } }
+          } }
+        },
+        next: { block: { type: 'tello_land' } }
+      } } }
+    ] } }
+  },
+  battery_check: {
+    name: '🔋 Flip if battery is high enough (if/else)',
+    state: { blocks: { languageVersion: 0, blocks: [
+      { type: 'controls_if', x: 40, y: 40,
+        extraState: { hasElse: true },
+        inputs: {
+          IF0: { block: {
+            type: 'logic_compare', fields: { OP: 'GTE' },
+            inputs: {
+              A: { block: { type: 'tello_get_battery' } },
+              B: { shadow: { type: 'math_number', fields: { NUM: 50 } } }
+            }
+          } },
+          DO0: { block: {
+            type: 'tello_takeoff',
+            next: { block: { type: 'tello_move_up', fields: { D: 50 },
+              next: { block: { type: 'tello_flip_forward',
+                next: { block: { type: 'tello_land' } } } } } }
+          } },
+          ELSE: { block: {
+            type: 'text_print',
+            inputs: { TEXT: { shadow: { type: 'text', fields: { TEXT: 'battery too low' } } } }
+          } }
+        }
+      }
+    ] } }
+  },
+  spiral: {
+    name: '🌀 Spiral up (loop with three moves)',
+    state: { blocks: { languageVersion: 0, blocks: [
+      { type: 'tello_takeoff', x: 40, y: 40, next: { block: {
+        type: 'controls_repeat_ext',
+        inputs: {
+          TIMES: { shadow: { type: 'math_number', fields: { NUM: 8 } } },
+          DO: { block: {
+            type: 'tello_move_forward', fields: { D: 40 },
+            next: { block: {
+              type: 'tello_rotate_cw', fields: { A: 45 },
+              next: { block: { type: 'tello_move_up', fields: { D: 20 } } }
+            } }
+          } }
+        },
+        next: { block: { type: 'tello_land' } }
+      } } }
+    ] } }
+  },
+};
+
+// ════════════════════════════════════════════════════════════════
+// BLOCKLY THEME + WORKSPACE
+// ════════════════════════════════════════════════════════════════
+const droneTheme = Blockly.Theme.defineTheme('drone-dark', {
+  base: Blockly.Themes.Classic,
+  componentStyles: {
+    workspaceBackgroundColour: '#0a0e1f',
+    toolboxBackgroundColour:   '#11172e',
+    toolboxForegroundColour:   '#d8e3ff',
+    flyoutBackgroundColour:    '#0e1428',
+    flyoutForegroundColour:    '#d8e3ff',
+    flyoutOpacity:             1,
+    scrollbarColour:           '#2a3a6a',
+    insertionMarkerColour:     '#00e5ff',
+    insertionMarkerOpacity:    0.4,
+    markerColour:              '#00e5ff',
+    cursorColour:              '#00e5ff',
+    selectedGlowColour:        '#00e5ff',
+    replacementGlowColour:     '#00e5ff',
+    selectedGlowSize:          0.4,
+    gridColour:                '#1a2548',
+  }
+});
+
+const workspace = Blockly.inject('blockly-host', {
+  toolbox: TOOLBOX,
+  theme: droneTheme,
+  renderer: 'geras',
+  trashcan: true,
+  zoom: { controls: true, wheel: true, startScale: 1.0, maxScale: 2, minScale: 0.4, scaleSpeed: 1.2 },
+  grid: { spacing: 24, length: 3, colour: '#1a2548', snap: true },
+  move: { scrollbars: true, drag: true, wheel: false },
+});
+
+// Resize Blockly when its container changes
+new ResizeObserver(() => Blockly.svgResize(workspace)).observe(document.getElementById('blockly-host'));
+
+// ════════════════════════════════════════════════════════════════
+// CODE PREVIEW (read-only CodeMirror)
+// ════════════════════════════════════════════════════════════════
+const codePreview = CodeMirror.fromTextArea(document.getElementById('code-preview'), {
+  mode: 'python',
+  theme: 'vsc-dark',
+  lineNumbers: true,
+  indentUnit: 4,
+  readOnly: 'nocursor',  // not editable, no cursor
+  scrollbarStyle: 'native',
+  lineWrapping: false,
+});
+codePreview.setSize('100%', '100%');
+codePreview.setValue('# Drag blocks from the toolbox on the right to start.\n');
+new ResizeObserver(() => setTimeout(() => codePreview.refresh(), 30)).observe(document.getElementById('cm-host'));
+
+// Re-generate the Python preview every time the workspace changes
+function regenerate() {
+  let code;
+  try {
+    code = Blockly.Python.workspaceToCode(workspace);
+  } catch (e) {
+    codePreview.setValue('# (Generation error: ' + e.message + ')\n');
+    return;
+  }
+  if (!code.trim()) {
+    codePreview.setValue('# Drag blocks from the toolbox to start.\n');
+    return;
+  }
+  // Show the FULL code that will run, including the auto-added boilerplate
+  // so students see what real djitellopy code looks like.
+  const full = `# This is the Python code your blocks make.
+# To run on a real Tello drone:
+#   1. pip install djitellopy
+#   2. Connect to the Tello-XXXXXX WiFi
+#   3. Save this file and run it with Python
+
+from djitellopy import Tello
+
+tello = Tello()
+tello.connect()
+
+` + code + `
+tello.end()
+`;
+  codePreview.setValue(full);
+}
+workspace.addChangeListener((event) => {
+  if (event.isUiEvent) return;     // ignore selection/scroll/etc.
+  if (event.type === Blockly.Events.FINISHED_LOADING) return;
+  regenerate();
+});
+
+// ════════════════════════════════════════════════════════════════
+// EXAMPLES dropdown
+// ════════════════════════════════════════════════════════════════
+const exampleSelect = document.getElementById('example-select');
+Object.entries(EXAMPLES).forEach(([key, ex]) => {
+  const o = document.createElement('option');
+  o.value = key; o.textContent = ex.name;
+  exampleSelect.appendChild(o);
+});
+exampleSelect.addEventListener('change', e => {
+  const key = e.target.value;
+  if (!key) return;
+  const ex = EXAMPLES[key];
+  if (!ex) return;
+  Blockly.serialization.workspaces.load(ex.state, workspace);
+  toast('Loaded example: ' + ex.name);
+  e.target.value = '';
+  regenerate();
+});
+
+document.getElementById('btn-clear-blocks').addEventListener('click', () => {
+  if (workspace.getAllBlocks(false).length === 0) return;
+  if (confirm('Clear all blocks from the workspace?')) {
+    workspace.clear();
+    regenerate();
+  }
+});
+
+// ════════════════════════════════════════════════════════════════
+// OUTPUT TABS
+// ════════════════════════════════════════════════════════════════
+document.querySelectorAll('.inline-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    const name = tab.dataset.tab;
+    document.querySelectorAll('.inline-tab').forEach(t => t.classList.toggle('active', t === tab));
+    document.querySelectorAll('#pane-output [data-tab]').forEach(c => {
+      if (c.classList.contains('inline-tab')) return;
+      c.style.display = (c.dataset.tab === name) ? '' : 'none';
+    });
+    if (name === 'code') setTimeout(() => codePreview.refresh(), 30);
+  });
+});
+
+// ════════════════════════════════════════════════════════════════
+// COPY CODE
+// ════════════════════════════════════════════════════════════════
+document.getElementById('btn-copy-code').addEventListener('click', async () => {
+  const txt = codePreview.getValue();
+  try {
+    await navigator.clipboard.writeText(txt);
+    toast('✓ Code copied — paste into VS Code to fly a real Tello.');
+  } catch (e) { toast('Clipboard blocked — select all in code pane and copy manually.'); }
+});
+
+// ════════════════════════════════════════════════════════════════
+// RUN / STOP / RESET
+// ════════════════════════════════════════════════════════════════
+const btnRun   = document.getElementById('btn-run');
+const btnStop  = document.getElementById('btn-stop');
+const btnReset = document.getElementById('btn-reset');
+const btnClear = document.getElementById('btn-clear-console');
+
+btnRun.addEventListener('click', async () => {
+  if (!pyodide) { toast('Pyodide not yet loaded.'); return; }
+  if (isPlaying) { toast('Already running. Press Stop first.'); return; }
+
+  const userCode = Blockly.Python.workspaceToCode(workspace);
+  if (!userCode.trim()) { toast('Drag some blocks first!'); return; }
+
+  // Switch to console tab so students see prints / errors
+  document.querySelector('.inline-tab[data-tab="console"]').click();
+  log('────────  RUNNING YOUR BLOCKS  ────────', 'sys');
+
+  // Wrap with auto-imports + connect + end
+  const fullCode =
+    'from djitellopy import Tello\n' +
+    'tello = Tello()\n' +
+    'tello.connect()\n' +
+    '\n' +
+    userCode +
+    '\ntry:\n    tello.end()\nexcept Exception:\n    pass\n';
+
+  btnRun.disabled = true;
+  setStatus('PARSING');
+  try {
+    await pyodide.runPythonAsync(fullCode);
+    log('────────  PROGRAM DONE — animations playing  ────────', 'sys');
+  } catch (e) {
+    log(String(e), 'err');
+    log('────────  ABORTED  ────────', 'sys');
+  } finally {
+    btnRun.disabled = false;
+    if (commandQueue.length === 0 && !isPlaying) setStatus('READY');
+  }
+});
+
+btnStop.addEventListener('click', () => {
+  log('STOP requested by user.', 'warn');
+  stopRequested = true;
+  commandQueue.length = 0;
+  updateHud();
+});
+
+btnReset.addEventListener('click', () => {
+  if (isPlaying) { toast('Stop the program first.'); return; }
+  drone.position.set(0, 0.5, 0);
+  drone.rotation.set(0, 0, 0);
+  isAirborne = false;
+  propsSpinSpeed.value = 0;
+  clearTrail();
+  logical.pos.set(0, 0.5, 0);
+  logical.yaw = 0;
+  logical.airborne = false;
+  logical.flightTimeAccum = 0;
+  logical.battery = 100;
+  updateHud();
+  setAction('IDLE'); setStatus('READY');
+  log('Drone reset to origin · battery 100% · yaw 0°', 'sys');
+});
+
+btnClear.addEventListener('click', () => { consoleEl.innerHTML = ''; });
+
+const speedInput = document.getElementById('speed');
+const speedVal   = document.getElementById('speed-val');
+speedInput.addEventListener('input', () => {
+  speedMul = parseFloat(speedInput.value);
+  speedVal.textContent = speedMul.toFixed(2) + '×';
+});
+
+// ════════════════════════════════════════════════════════════════
+// COLLAPSE / RESIZE
+// ════════════════════════════════════════════════════════════════
+const mainGrid = document.getElementById('main-grid');
+const rightCol = document.getElementById('right-col');
+const paneViewport = document.getElementById('pane-viewport');
+const paneBlockly  = document.getElementById('pane-blockly');
+const paneOutput   = document.getElementById('pane-output');
+const splitH = document.getElementById('split-h');
+const splitV = document.getElementById('split-v');
+
+const collapsed = { left: false, top: false, bottom: false };
+function applyCollapse() {
+  paneViewport.classList.toggle('collapsed', collapsed.left);
+  paneBlockly.classList.toggle('collapsed', collapsed.top);
+  paneOutput.classList.toggle('collapsed', collapsed.bottom);
+  mainGrid.classList.toggle('left-collapsed', collapsed.left);
+  mainGrid.classList.toggle('right-collapsed', collapsed.top && collapsed.bottom);
+  rightCol.classList.toggle('top-collapsed', collapsed.top);
+  rightCol.classList.toggle('bottom-collapsed', collapsed.bottom);
+  splitH.classList.toggle('splitter-disabled', collapsed.left || (collapsed.top && collapsed.bottom));
+  splitV.classList.toggle('splitter-disabled', collapsed.top || collapsed.bottom);
+  setTimeout(() => {
+    Blockly.svgResize(workspace);
+    codePreview.refresh();
+  }, 50);
+}
+document.querySelectorAll('[data-collapse]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const which = btn.dataset.collapse;
+    collapsed[which] = !collapsed[which];
+    btn.textContent = collapsed[which] ? '▢' : '▣';
+    btn.title = collapsed[which] ? 'Expand' : 'Collapse';
+    applyCollapse();
+  });
+});
+document.getElementById('btn-restore-all').addEventListener('click', () => {
+  collapsed.left = collapsed.top = collapsed.bottom = false;
+  document.querySelectorAll('[data-collapse]').forEach(b => { b.textContent = '▣'; b.title = 'Collapse'; });
+  document.documentElement.style.setProperty('--col-left', '38%');
+  document.documentElement.style.setProperty('--row-top', '62%');
+  applyCollapse();
+  toast('Layout restored.');
+});
+
+function setupSplitter(elem, axis, varName, minPx) {
+  let dragging = false, startCoord = 0, startPx = 0, containerSize = 0;
+  const onDown = (e) => {
+    if (elem.classList.contains('splitter-disabled')) return;
+    dragging = true;
+    elem.classList.add('dragging');
+    document.body.style.cursor = axis === 'h' ? 'ew-resize' : 'ns-resize';
+    document.body.style.userSelect = 'none';
+    startCoord = axis === 'h' ? e.clientX : e.clientY;
+    const pane = axis === 'h' ? paneViewport : paneBlockly;
+    startPx = axis === 'h' ? pane.offsetWidth : pane.offsetHeight;
+    const container = axis === 'h' ? mainGrid : rightCol;
+    containerSize = axis === 'h' ? container.offsetWidth : container.offsetHeight;
+    e.preventDefault();
+  };
+  const onMove = (e) => {
+    if (!dragging) return;
+    const cur = axis === 'h' ? e.clientX : e.clientY;
+    const delta = cur - startCoord;
+    const newPx = Math.max(minPx, Math.min(containerSize - 80, startPx + delta));
+    const pct = (newPx / containerSize) * 100;
+    document.documentElement.style.setProperty(varName, pct + '%');
+  };
+  const onUp = () => {
+    if (!dragging) return;
+    dragging = false;
+    elem.classList.remove('dragging');
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+    setTimeout(() => { Blockly.svgResize(workspace); codePreview.refresh(); }, 30);
+  };
+  elem.addEventListener('mousedown', onDown);
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+  elem.addEventListener('touchstart', e => onDown(e.touches[0]), { passive: false });
+  document.addEventListener('touchmove', e => onMove(e.touches[0]), { passive: false });
+  document.addEventListener('touchend', onUp);
+}
+setupSplitter(splitH, 'h', '--col-left', 120);
+setupSplitter(splitV, 'v', '--row-top', 80);
+splitH.addEventListener('dblclick', () => {
+  document.documentElement.style.setProperty('--col-left', '38%');
+  setTimeout(() => Blockly.svgResize(workspace), 30);
+});
+splitV.addEventListener('dblclick', () => {
+  document.documentElement.style.setProperty('--row-top', '62%');
+  setTimeout(() => Blockly.svgResize(workspace), 30);
+});
+
+// ════════════════════════════════════════════════════════════════
+// BOOT
+// ════════════════════════════════════════════════════════════════
+(async () => {
+  await boot('▸ Booting Drone Blocks Studio v1.0', 0);
+  await boot('▸ Initialising WebGL renderer...', 200);
+  await boot('▸ Building 3D scene...', 200);
+  await boot('▸ Spawning drone at origin (0, 0, 0)...', 200);
+  await boot('▸ Loading Blockly workspace...', 200);
+  updateHud();
+  await initPyodide();
+  await boot('▸ All systems nominal — ready to fly.', 200);
+  await sleep(500);
+  document.getElementById('loading').classList.add('hidden');
+
+  // Auto-load the simplest example so students see something on first open
+  Blockly.serialization.workspaces.load(EXAMPLES.hello.state, workspace);
+  regenerate();
+})();
+
+log('Welcome! Drag blocks from the toolbox into the workspace, then press ▶ Run.', 'sys');
+log('Tip: try the "Load Example…" dropdown to see what blocks can do.', 'sys');
+log('Tip: ⎘ copies the generated Python — paste it into VS Code to fly a real Tello drone.', 'sys');
+</script>
+
+</body>
+</html>
