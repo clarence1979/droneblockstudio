@@ -4456,6 +4456,7 @@ checkItems.forEach(item => {
   <div class="modal">
     <div class="modal-header">
       <h2>SELECT <span>MISSION</span></h2>
+      <button class="btn" id="lv-unlock" style="margin-left:auto" title="Teacher: unlock every mission on this device">⚿ UNLOCK ALL</button>
       <button class="close" id="lv-close">✕</button>
     </div>
     <div class="modal-body">
@@ -4638,6 +4639,11 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 //   build(scene) — function that adds obstacles to a per-level group,
 //   objectives — array of { id, label, test(state) } - state = { pos, yaw, airborne, gatesPassed, pickedUp, etc. }
 //   failOn(state) — optional, returns a string reason if the run is failed
+// Ground-plane distance: altitude is always tested explicitly, never folded
+// into the pad checks (the drone hovers 100cm up, which used to make every
+// "reach the pad" objective impossible to satisfy).
+const hd = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
+
 const LEVELS = [
   // ───────── LEVEL 1 ─────────
   {
@@ -4646,14 +4652,14 @@ const LEVELS = [
     year: "Year 8",
     difficulty: 1,
     description:
-      "Welcome, cadet. Start the engines, lift off, fly forward 100 cm to the green pad, and land safely. Three commands. You can do it.",
+      "Welcome, cadet. Start the engines, lift off, fly forward 150 cm to the green pad, and land safely. Three commands. You can do it.",
     concepts: ["takeoff", "move_forward", "land"],
     targetTime: 25,
     targetLines: 3,
     hints: [
       "You only need three blocks/lines: take off, fly forward, then land.",
-      "The green pad is straight ahead. 'fly forward' moves the drone in the direction it is facing.",
-      "Python: tello.takeoff(); tello.move_forward(100); tello.land()"
+      "The green pad is 150 cm straight ahead. 'forward' moves the drone in the direction it is facing.",
+      "Python:\ntello.takeoff()\ntello.move_forward(150)\ntello.land()"
     ],
     build(group) {
       addPad(group, 0, 0, 0, 0x00e5ff, "START");
@@ -4661,9 +4667,9 @@ const LEVELS = [
       this._goal = new THREE.Vector3(0, 0, -150);
     },
     objectives: [
-      { id: "to",   label: "Take off",                    test: s => s.airborne },
-      { id: "fwd",  label: "Reach the green pad",         test: s => s.pos.distanceTo(s.lvl._goal) < 50 && s.airborne },
-      { id: "land", label: "Land on the green pad",       test: s => !s.airborne && s.pos.distanceTo(s.lvl._goal) < 50 },
+      { id: "to",   label: "Take off",                  test: s => s.airborne },
+      { id: "fwd",  label: "Reach the green pad",       test: s => hd(s.pos, s.lvl._goal) < 50 && s.airborne },
+      { id: "land", label: "Land on the green pad",     test: s => !s.airborne && hd(s.pos, s.lvl._goal) < 50 },
     ],
   },
 
@@ -4674,25 +4680,25 @@ const LEVELS = [
     year: "Year 8–9",
     difficulty: 2,
     description:
-      "A glowing ring is your first checkpoint. Fly through it at the right altitude, then continue to the landing pad on the other side.",
+      "A glowing ring is your first checkpoint. Climb to its height, fly through it, then continue to the landing pad 300 cm from base.",
     concepts: ["takeoff", "move_up", "move_forward", "land"],
     targetTime: 35,
     targetLines: 5,
     hints: [
-      "The ring is up in the air. After takeoff you will need to climb a bit before flying forward.",
-      "Take off → move up 50 → move forward 250 → land. Adjust the numbers if you miss.",
-      "Python:\ntello.takeoff()\ntello.move_up(50)\ntello.move_forward(250)\ntello.land()"
+      "The ring is up in the air. After takeoff you need to climb before flying forward.",
+      "Take off (you are now 100 cm up) → move up 50 → move forward 300 → land.",
+      "Python:\ntello.takeoff()\ntello.move_up(50)\ntello.move_forward(300)\ntello.land()"
     ],
     build(group) {
       addPad(group, 0, 0, 0, 0x00e5ff, "START");
-      addRing(group, 0, 150, -150, 0, 0x00e5ff);
+      addRing(group, 0, 150, -150, 0, 0x00e5ff, "ring0");
       addPad(group, 0, 0, -300, 0x5cffae, "GOAL");
       this._goal = new THREE.Vector3(0, 0, -300);
     },
     objectives: [
-      { id: "to",    label: "Take off",                                  test: s => s.airborne },
-      { id: "ring",  label: "Fly through the cyan ring",                 test: s => s.gatesPassed.has("ring0") },
-      { id: "land",  label: "Land on the green pad",                     test: s => !s.airborne && s.pos.distanceTo(s.lvl._goal) < 50 },
+      { id: "to",   label: "Take off",                      test: s => s.airborne },
+      { id: "ring", label: "Fly through the cyan ring",     test: s => s.gatesPassed.has("ring0") },
+      { id: "land", label: "Land on the green pad",         test: s => !s.airborne && hd(s.pos, s.lvl._goal) < 50 },
     ],
   },
 
@@ -4703,7 +4709,7 @@ const LEVELS = [
     year: "Year 9",
     difficulty: 3,
     description:
-      "Patrol the corners of a 200 cm square and return to base. Tip: this is much easier with a loop. Hit each of the 4 corner beacons in any order, then land where you started.",
+      "Patrol the corners of a 200 cm square and return to base. Tip: this is much easier with a loop. Hit each of the 3 corner beacons, then land where you started.",
     concepts: ["loops", "rotate", "move_forward"],
     targetTime: 60,
     targetLines: 7,
@@ -4718,16 +4724,16 @@ const LEVELS = [
       this._beacons = [];
       corners.forEach((c, i) => {
         addBeacon(group, c[0], c[1], c[2], "C" + (i+1));
-        this._beacons.push(new THREE.Vector3(c[0], 100, c[2]));  // beacon zone is up in the air
+        this._beacons.push(new THREE.Vector3(c[0], 100, c[2]));
       });
       this._goal = new THREE.Vector3(0, 0, 0);
     },
     objectives: [
-      { id: "to",   label: "Take off",                            test: s => s.airborne },
-      { id: "b1",   label: "Visit beacon C1 (200, 0, 0)",         test: s => s.lvl._beacons[0].clone().setY(s.pos.y).distanceTo(s.pos) < 60 },
-      { id: "b2",   label: "Visit beacon C2 (200, 0, 200)",       test: s => s.lvl._beacons[1].clone().setY(s.pos.y).distanceTo(s.pos) < 60 },
-      { id: "b3",   label: "Visit beacon C3 (0, 0, 200)",         test: s => s.lvl._beacons[2].clone().setY(s.pos.y).distanceTo(s.pos) < 60 },
-      { id: "land", label: "Land back at the start",              test: s => !s.airborne && s.pos.distanceTo(s.lvl._goal) < 60 },
+      { id: "to",   label: "Take off",                      test: s => s.airborne },
+      { id: "b1",   label: "Visit beacon C1",               test: s => hd(s.pos, s.lvl._beacons[0]) < 60 },
+      { id: "b2",   label: "Visit beacon C2",               test: s => hd(s.pos, s.lvl._beacons[1]) < 60 },
+      { id: "b3",   label: "Visit beacon C3",               test: s => hd(s.pos, s.lvl._beacons[2]) < 60 },
+      { id: "land", label: "Land back at the start",        test: s => !s.airborne && hd(s.pos, s.lvl._goal) < 60 },
     ],
   },
 
@@ -4743,9 +4749,9 @@ const LEVELS = [
     targetTime: 50,
     targetLines: 7,
     hints: [
-      "The buildings are at x = 0 along the flight path. Offset your route left and right (negative/positive y in djitellopy means left/right).",
-      "go_xyz_speed(x, y, z, speed) is your friend — it moves you to a 3D point relative to where you are. Try arcs of about (200, ±100, 0).",
-      "Python sketch:\ntello.takeoff()\ntello.go_xyz_speed(150, 100, 0, 60)   # left around B1\ntello.go_xyz_speed(150,-100, 0, 60)   # right around B2\ntello.go_xyz_speed(150, 100, 0, 60)   # left around B3\ntello.go_xyz_speed(100, 0, 0, 60)\ntello.land()"
+      "The buildings sit in a straight line ahead of you. Swing wide of each one — about 100 cm to the side is plenty.",
+      "go_xyz_speed(x, y, z, speed) moves you to a point relative to where you are: x is forward, POSITIVE y is left, z is up. Each building is 150 cm further along.",
+      "Python:\ntello.takeoff()\ntello.go_xyz_speed(150, 100, 0, 60)    # left of B1\ntello.go_xyz_speed(150, -200, 0, 60)   # right of B2\ntello.go_xyz_speed(150, 200, 0, 60)    # left of B3\ntello.go_xyz_speed(150, -100, 0, 60)   # back to centre, on the pad\ntello.land()"
     ],
     build(group) {
       addPad(group, 0, 0, 0, 0x00e5ff, "START");
@@ -4755,23 +4761,23 @@ const LEVELS = [
       addPad(group, 0, 0, -600, 0x5cffae, "GOAL");
       this._goal = new THREE.Vector3(0, 0, -600);
       this._buildings = [
-        { x: 0, z: -150, w: 60, d: 60 },
-        { x: 0, z: -300, w: 60, d: 60 },
-        { x: 0, z: -450, w: 60, d: 60 },
+        { x: 0, z: -150, w: 60, d: 60, top: 200 },
+        { x: 0, z: -300, w: 60, d: 60, top: 250 },
+        { x: 0, z: -450, w: 60, d: 60, top: 220 },
       ];
     },
     objectives: [
       { id: "to",   label: "Take off",                       test: s => s.airborne },
-      { id: "p1",   label: "Pass building 1 (z ≤ -150)",     test: s => -s.pos.z >= 150 && s.airborne },
-      { id: "p2",   label: "Pass building 2 (z ≤ -300)",     test: s => -s.pos.z >= 300 && s.airborne },
-      { id: "p3",   label: "Pass building 3 (z ≤ -450)",     test: s => -s.pos.z >= 450 && s.airborne },
-      { id: "land", label: "Land on the green helipad",      test: s => !s.airborne && s.pos.distanceTo(s.lvl._goal) < 60 },
+      { id: "p1",   label: "Pass building 1",                test: s => -s.pos.z >= 150 && s.airborne },
+      { id: "p2",   label: "Pass building 2",                test: s => -s.pos.z >= 300 && s.airborne },
+      { id: "p3",   label: "Pass building 3",                test: s => -s.pos.z >= 450 && s.airborne },
+      { id: "land", label: "Land on the green helipad",      test: s => !s.airborne && hd(s.pos, s.lvl._goal) < 60 },
     ],
     failOn(s) {
       for (const b of s.lvl._buildings) {
         const dx = Math.abs(s.pos.x - b.x);
-        const dz = Math.abs(-s.pos.z - (-b.z));
-        if (dx < b.w/2 + 8 && dz < b.d/2 + 8 && s.pos.y < 200) {
+        const dz = Math.abs(s.pos.z - b.z);
+        if (dx < b.w/2 + 8 && dz < b.d/2 + 8 && s.pos.y < b.top - 5) {
           return "Collided with a building!";
         }
       }
@@ -4786,41 +4792,40 @@ const LEVELS = [
     year: "Year 10",
     difficulty: 5,
     description:
-      "The central tower has 4 rings spiralling around it at different heights. Pass through ALL FOUR in order, then land on the rooftop pad. Think loops + a bit of rotation.",
+      "Four rings spiral around the central tower, each one a quarter-turn further round and 50 cm higher. Pass through ALL FOUR, then land on the rooftop pad. Think loops + rotation.",
     concepts: ["3D loops", "rotation", "altitude control"],
     targetTime: 70,
     targetLines: 10,
     hints: [
-      "Each ring is 90° around the tower, and 50 cm higher than the last one. A loop that flies forward, rotates 90° clockwise, and climbs 50 cm fits perfectly.",
-      "After takeoff you start 100 cm up. The four rings sit at altitude 100, 150, 200, 250 — so 4 iterations match.",
-      "Python:\ntello.takeoff()\nfor i in range(4):\n    tello.move_forward(180)\n    tello.rotate_clockwise(90)\n    tello.move_up(50)\ntello.land()"
+      "Each ring is 90° around the tower and 50 cm higher than the last. A loop that flies forward, rotates 90° clockwise, then climbs 50 cm fits perfectly.",
+      "Four laps of (forward 180, clockwise 90, up 50) puts you back at the start corner at 300 cm — roof height. From there the pad is forward 90 then right 90.",
+      "Python:\ntello.takeoff()\nfor i in range(4):\n    tello.move_forward(180)\n    tello.rotate_clockwise(90)\n    tello.move_up(50)\ntello.move_forward(90)\ntello.move_right(90)\ntello.land()"
     ],
     build(group) {
       addPad(group, 0, 0, 0, 0x00e5ff, "START");
-      // Central tower
-      addBuilding(group, 0, 0, -180, 80, 320, 80);
-      // 4 rings around it, each rotated 90° + raised 50cm
+      // Tower sits in the CENTRE of the spiral, clear of the flight path
+      addBuilding(group, 90, 0, -90, 80, 300, 80);
       const rs = [
-        { p: [180,100, -180], rotY: 0     },        // forward of start
-        { p: [0,  150, -360], rotY: -Math.PI/2 },   // far side, facing left
-        { p: [-180,200,-180], rotY: 0     },
-        { p: [0,  250, 0   ], rotY: -Math.PI/2 },
+        { p: [0,   100, -90],  rotY: 0 },
+        { p: [90,  150, -180], rotY: -Math.PI/2 },
+        { p: [180, 200, -90],  rotY: 0 },
+        { p: [90,  250, 0],    rotY: -Math.PI/2 },
       ];
       this._gates = [];
-      rs.forEach((r,i) => {
-        addRing(group, r.p[0], r.p[1], r.p[2], r.rotY, 0xffd54f, "ring"+i);
-        this._gates.push("ring"+i);
+      rs.forEach((r, i) => {
+        addRing(group, r.p[0], r.p[1], r.p[2], r.rotY, 0xffd54f, "ring" + i);
+        this._gates.push("ring" + i);
       });
-      addPad(group, 0, 320, -180, 0x5cffae, "GOAL");
-      this._goal = new THREE.Vector3(0, 320, -180);
+      addPad(group, 90, 300, -90, 0x5cffae, "ROOF");
+      this._goal = new THREE.Vector3(90, 300, -90);
     },
     objectives: [
-      { id: "to",  label: "Take off",                            test: s => s.airborne },
-      { id: "r0",  label: "Pass ring 1 (east)",                  test: s => s.gatesPassed.has("ring0") },
-      { id: "r1",  label: "Pass ring 2 (south)",                 test: s => s.gatesPassed.has("ring1") },
-      { id: "r2",  label: "Pass ring 3 (west)",                  test: s => s.gatesPassed.has("ring2") },
-      { id: "r3",  label: "Pass ring 4 (north)",                 test: s => s.gatesPassed.has("ring3") },
-      { id: "lnd", label: "Land on the rooftop helipad",         test: s => !s.airborne && Math.abs(s.pos.y - 320) < 30 && s.pos.distanceTo(s.lvl._goal) < 60 },
+      { id: "to",  label: "Take off",                        test: s => s.airborne },
+      { id: "r0",  label: "Pass ring 1 (100 cm)",            test: s => s.gatesPassed.has("ring0") },
+      { id: "r1",  label: "Pass ring 2 (150 cm)",            test: s => s.gatesPassed.has("ring1") },
+      { id: "r2",  label: "Pass ring 3 (200 cm)",            test: s => s.gatesPassed.has("ring2") },
+      { id: "r3",  label: "Pass ring 4 (250 cm)",            test: s => s.gatesPassed.has("ring3") },
+      { id: "lnd", label: "Land on the rooftop helipad",     test: s => !s.airborne && Math.abs(s.pos.y - 300) < 30 && hd(s.pos, s.lvl._goal) < 60 },
     ],
   },
 
@@ -4831,18 +4836,17 @@ const LEVELS = [
     year: "Year 10–11",
     difficulty: 6,
     description:
-      "Five gates in a slalom pattern. Beat the clock! Time bonus is huge here — every second under 30 s adds 50 points.",
+      "Five gates in a slalom pattern. Beat the clock! Time bonus is huge here — every five seconds under 30 s adds 50 points.",
     concepts: ["optimisation", "go_xyz_speed", "speed control"],
     targetTime: 30,
     targetLines: 9,
     hints: [
-      "go_xyz_speed lets you fly diagonally to a gate in a single command — much faster than separate moves+rotates.",
-      "Crank speed up. Tello's max for go_xyz_speed is 100 cm/s. Plot a direct route through each gate's centre.",
-      "Python:\ntello.takeoff()\ntello.go_xyz_speed( 100, -80, 50, 100)\ntello.go_xyz_speed( 200,  80,  0, 100)\ntello.go_xyz_speed( 100, -80, 50, 100)\ntello.go_xyz_speed( 200,  80,  0, 100)\ntello.go_xyz_speed( 100,   0,-30, 100)\ntello.land()"
+      "go_xyz_speed flies you diagonally to a point in ONE command — far faster than separate moves and rotates.",
+      "Gates alternate 80 cm left and 80 cm right, 120 cm apart, at 100 cm and 150 cm high. Aim each leg to land just PAST the gate so you fly through, not up to it.",
+      "Python:\ntello.takeoff()\ntello.go_xyz_speed(140,  80,   0, 100)\ntello.go_xyz_speed(120, -160,  50, 100)\ntello.go_xyz_speed(120,  160, -50, 100)\ntello.go_xyz_speed(120, -160,  50, 100)\ntello.go_xyz_speed(120,  80,  -30, 100)\ntello.go_xyz_speed(100,   0,   0, 100)\ntello.land()"
     ],
     build(group) {
       addPad(group, 0, 0, 0, 0x00e5ff, "START");
-      // 5 zigzag gates, alternating left/right
       const gates = [
         { p: [-80, 100, -120], rotY: 0 },
         { p: [ 80, 150, -240], rotY: 0 },
@@ -4852,8 +4856,8 @@ const LEVELS = [
       ];
       this._gates = [];
       gates.forEach((g, i) => {
-        addRing(group, g.p[0], g.p[1], g.p[2], g.rotY, 0xff5577, "gate"+i);
-        this._gates.push("gate"+i);
+        addRing(group, g.p[0], g.p[1], g.p[2], g.rotY, 0xff5577, "gate" + i);
+        this._gates.push("gate" + i);
       });
       addPad(group, 0, 0, -720, 0x5cffae, "GOAL");
       this._goal = new THREE.Vector3(0, 0, -720);
@@ -4865,7 +4869,7 @@ const LEVELS = [
       { id: "g2",   label: "Pass gate 3",                    test: s => s.gatesPassed.has("gate2") },
       { id: "g3",   label: "Pass gate 4",                    test: s => s.gatesPassed.has("gate3") },
       { id: "g4",   label: "Pass gate 5",                    test: s => s.gatesPassed.has("gate4") },
-      { id: "land", label: "Land on the green pad",          test: s => !s.airborne && s.pos.distanceTo(s.lvl._goal) < 60 },
+      { id: "land", label: "Land on the green pad",          test: s => !s.airborne && hd(s.pos, s.lvl._goal) < 60 },
     ],
   },
 
@@ -4876,32 +4880,32 @@ const LEVELS = [
     year: "Year 11",
     difficulty: 7,
     description:
-      "Atmospheric scientists need data at exactly 150 cm altitude. Climb to 150 cm (±20 cm), maintain that altitude through 3 gates, then return to base. You will need the height sensor.",
+      "Atmospheric scientists need data at 150 cm altitude. Climb to 150 cm using the height sensor, hold that altitude through 3 gates, then land on the pad at the far end.",
     concepts: ["sensors", "while loops", "conditionals"],
     targetTime: 60,
     targetLines: 12,
     hints: [
-      "tello.get_height() returns your current altitude in cm. After takeoff (100 cm), use a while loop to climb until height ≥ 150.",
-      "Pattern: while get_height() < 150: move_up(20). Then fly forward through the 3 gates without changing altitude.",
-      "Python:\ntello.takeoff()\nwhile tello.get_height() < 150:\n    tello.move_up(20)\nfor i in range(3):\n    tello.move_forward(150)\ntello.land()"
+      "tello.get_height() returns your current altitude in cm. After takeoff you are at 100 cm — use a while loop to climb until height is at least 150.",
+      "Pattern: while get_height() < 150: move_up(20). Then fly forward in 150 cm steps through the gates WITHOUT changing altitude. The pad is 600 cm out — that's four steps.",
+      "Python:\ntello.takeoff()\nwhile tello.get_height() < 150:\n    tello.move_up(20)\nfor i in range(4):\n    tello.move_forward(150)\ntello.land()"
     ],
     build(group) {
       addPad(group, 0, 0, 0, 0x00e5ff, "START");
       this._gates = [];
       [-150, -300, -450].forEach((z, i) => {
-        addRing(group, 0, 150, z, 0, 0x00e5ff, "alt"+i);
-        this._gates.push("alt"+i);
+        addRing(group, 0, 150, z, 0, 0x00e5ff, "alt" + i);
+        this._gates.push("alt" + i);
       });
-      addPad(group, 0, 0, -550, 0x5cffae, "GOAL");
-      this._goal = new THREE.Vector3(0, 0, -550);
+      addPad(group, 0, 0, -600, 0x5cffae, "GOAL");
+      this._goal = new THREE.Vector3(0, 0, -600);
     },
     objectives: [
-      { id: "to",   label: "Take off",                                       test: s => s.airborne },
-      { id: "alt",  label: "Reach altitude ≥ 130 cm",                        test: s => s.pos.y >= 130 },
-      { id: "g0",   label: "Pass gate 1 (z ≤ -150)",                         test: s => s.gatesPassed.has("alt0") },
-      { id: "g1",   label: "Pass gate 2 (z ≤ -300)",                         test: s => s.gatesPassed.has("alt1") },
-      { id: "g2",   label: "Pass gate 3 (z ≤ -450)",                         test: s => s.gatesPassed.has("alt2") },
-      { id: "land", label: "Land on the green pad",                          test: s => !s.airborne && s.pos.distanceTo(s.lvl._goal) < 60 },
+      { id: "to",   label: "Take off",                       test: s => s.airborne },
+      { id: "alt",  label: "Reach altitude ≥ 130 cm",        test: s => s.pos.y >= 130 },
+      { id: "g0",   label: "Pass gate 1",                    test: s => s.gatesPassed.has("alt0") },
+      { id: "g1",   label: "Pass gate 2",                    test: s => s.gatesPassed.has("alt1") },
+      { id: "g2",   label: "Pass gate 3",                    test: s => s.gatesPassed.has("alt2") },
+      { id: "land", label: "Land on the green pad",          test: s => !s.airborne && hd(s.pos, s.lvl._goal) < 60 },
     ],
   },
 
@@ -4912,44 +4916,41 @@ const LEVELS = [
     year: "Year 11–12 / VCE",
     difficulty: 10,
     description:
-      "PILOT GRADUATION: you must combine everything. Climb through the gate, weave the slalom, then land on the rooftop pad. Show what you learned.",
+      "PILOT GRADUATION: combine everything. Climb through the gate, weave the slalom, then climb above the tower and land on the rooftop pad. Show what you learned.",
     concepts: ["integration", "functions", "everything together"],
     targetTime: 90,
     targetLines: 18,
     hints: [
-      "Break the mission into chunks. Define a function for each section (e.g. climb_through_gate(), do_slalom(), land_on_roof) — clean code wins.",
-      "Use go_xyz_speed for the slalom — three zigzag arcs, each about (200, ±90, 0). End above the rooftop pad before descending.",
-      "Python sketch:\ndef climb_and_pass():\n    tello.takeoff(); tello.move_up(50); tello.move_forward(200)\ndef slalom():\n    for dx in [80, -80, 80]:\n        tello.go_xyz_speed(200, dx, 0, 80)\ndef land_on_roof():\n    tello.go_xyz_speed(120, 0, 50, 60); tello.land()\nclimb_and_pass(); slalom(); land_on_roof()"
+      "Break the mission into chunks and give each one a function: climb_through_gate(), slalom(), land_on_roof(). Clean code wins.",
+      "The final tower is 280 cm tall. You CANNOT fly at it sideways — climb above 280 cm FIRST, then move over the pad, then land.",
+      "Python:\ndef climb_through_gate():\n    tello.takeoff(); tello.move_up(50); tello.move_forward(200)\n\ndef slalom():\n    tello.go_xyz_speed(120, -80, 0, 80)\n    tello.go_xyz_speed(140, 160, 0, 80)\n    tello.go_xyz_speed(140, -160, 0, 80)\n\ndef land_on_roof():\n    tello.move_up(170)\n    tello.go_xyz_speed(140, 80, 0, 60)\n    tello.land()\n\nclimb_through_gate()\nslalom()\nland_on_roof()"
     ],
     build(group) {
       addPad(group, 0, 0, 0, 0x00e5ff, "START");
-      // Initial gate
       addRing(group, 0, 150, -150, 0, 0x00e5ff, "gateA");
-      // Slalom buildings
       addBuilding(group, -80, 0, -300, 60, 220, 60);
       addBuilding(group,  80, 0, -440, 60, 220, 60);
       addBuilding(group, -80, 0, -580, 60, 220, 60);
-      // Final tall building with rooftop pad
       addBuilding(group, 0, 0, -740, 100, 280, 100);
       addPad(group, 0, 280, -740, 0x5cffae, "ROOF");
       this._goal = new THREE.Vector3(0, 280, -740);
       this._buildings = [
-        { x:-80, z:-300, w:60, d:60, top:220 },
-        { x: 80, z:-440, w:60, d:60, top:220 },
-        { x:-80, z:-580, w:60, d:60, top:220 },
-        { x:  0, z:-740, w:100,d:100,top:280 },
+        { x:-80, z:-300, w:60,  d:60,  top:220 },
+        { x: 80, z:-440, w:60,  d:60,  top:220 },
+        { x:-80, z:-580, w:60,  d:60,  top:220 },
+        { x:  0, z:-740, w:100, d:100, top:280 },
       ];
     },
     objectives: [
-      { id: "to",     label: "Take off",                              test: s => s.airborne },
-      { id: "gate",   label: "Pass through the cyan gate",             test: s => s.gatesPassed.has("gateA") },
-      { id: "slalom", label: "Pass the 3 slalom buildings (z ≤ -600)", test: s => -s.pos.z >= 600 && s.airborne },
-      { id: "roof",   label: "Land on the rooftop pad (alt ~280 cm)",  test: s => !s.airborne && s.pos.distanceTo(s.lvl._goal) < 60 },
+      { id: "to",     label: "Take off",                             test: s => s.airborne },
+      { id: "gate",   label: "Pass through the cyan gate",           test: s => s.gatesPassed.has("gateA") },
+      { id: "slalom", label: "Clear the 3 slalom towers",            test: s => -s.pos.z >= 600 && s.airborne },
+      { id: "roof",   label: "Land on the rooftop pad (280 cm)",     test: s => !s.airborne && Math.abs(s.pos.y - 280) < 30 && hd(s.pos, s.lvl._goal) < 60 },
     ],
     failOn(s) {
       for (const b of s.lvl._buildings) {
         const dx = Math.abs(s.pos.x - b.x);
-        const dz = Math.abs(-s.pos.z - (-b.z));
+        const dz = Math.abs(s.pos.z - b.z);
         if (dx < b.w/2 + 6 && dz < b.d/2 + 6 && s.pos.y < b.top - 5) {
           return "Collided with a building!";
         }
@@ -5136,6 +5137,14 @@ function clearTrail() {
 let levelGroup = new THREE.Group();
 scene.add(levelGroup);
 const ringDB = {};   // name -> { mesh, plane, center }
+const padDB = [];    // landable surfaces: { x, y, z, r }
+function surfaceHeightAt(x, z) {
+  let best = 0.5;
+  for (const p of padDB) {
+    if (p.y > 1 && Math.hypot(x - p.x, z - p.z) < p.r && p.y + 0.5 > best) best = p.y + 0.5;
+  }
+  return best;
+}
 
 function clearLevel() {
   while (levelGroup.children.length) {
@@ -5150,6 +5159,7 @@ function clearLevel() {
     });
   }
   for (const k in ringDB) delete ringDB[k];
+  padDB.length = 0;
 }
 
 function addPad(group, x, y, z, color, label) {
@@ -5162,6 +5172,7 @@ function addPad(group, x, y, z, color, label) {
   );
   pad.position.set(x, y + 0.6, z);
   group.add(pad);
+  padDB.push({ x, y, z, r: 46 });
   const ring = new THREE.Mesh(
     new THREE.RingGeometry(40, 46, 32),
     new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide, transparent: true, opacity: 0.9 })
@@ -5543,8 +5554,9 @@ const cmds = {
   async land() {
     if (!isAirborne) { log("Already on the ground.", "warn"); return; }
     log("tello.land()", "cmd");
-    await animatePath(p => new THREE.Vector3(p.x, 0.5, p.z),
-                      drone.position.y / DEFAULT_SPEED, "LAND");
+    const _surf = surfaceHeightAt(drone.position.x, drone.position.z);
+    await animatePath(p => new THREE.Vector3(p.x, _surf, p.z),
+                      Math.abs(drone.position.y - _surf) / DEFAULT_SPEED, "LAND");
     isAirborne = false; propsSpinSpeed.value = 0;
     log("landed", "ok");
   },
@@ -5639,7 +5651,7 @@ function updateLogical(name, args) {
   if (name === "takeoff") {
     if (!logical.airborne) { logical.airborne = true; logical.flightTimeAccum = 0; logical.pos.y = TAKEOFF_ALT; }
   } else if (name === "land" || name === "emergency") {
-    if (logical.airborne) { logical.airborne = false; logical.pos.y = 0.5; }
+    if (logical.airborne) { logical.airborne = false; logical.pos.y = surfaceHeightAt(logical.pos.x, logical.pos.z); }
   }
   else if (name === "move_forward") logical.pos.add(logicalForwardVec().multiplyScalar(args[0]));
   else if (name === "move_back")    logical.pos.add(logicalForwardVec().multiplyScalar(-args[0]));
@@ -5955,18 +5967,47 @@ tello.land()
 // ════════════════════════════════════════════════════════════════
 // PROGRESS / SAVE
 // ════════════════════════════════════════════════════════════════
-function loadProgress() {
+// Progress storage. localStorage throws on file:// pages and in some locked-down
+// browsers, which used to silently lose every completion. Fall back to memory
+// and tell the student once, rather than pretending it saved.
+let _memStore = null;
+let _storageWarned = false;
+function _store() {
+  if (_memStore !== null) return null;
   try {
-    const raw = localStorage.getItem(SAVE_KEY);
+    localStorage.setItem("__dbs_probe", "1");
+    localStorage.removeItem("__dbs_probe");
+    return localStorage;
+  } catch (e) {
+    _memStore = {};
+    return null;
+  }
+}
+function warnNoStorage() {
+  if (_storageWarned) return;
+  _storageWarned = true;
+  log("Progress cannot be saved in this browser/context — it will reset when you reload.", "warn");
+  toast("Progress won't be saved after a reload", "warn");
+}
+function loadProgress() {
+  const ls = _store();
+  try {
+    const raw = ls ? ls.getItem(SAVE_KEY) : (_memStore ? _memStore[SAVE_KEY] : null);
     if (raw) game.progress = JSON.parse(raw);
   } catch (e) { game.progress = {}; }
+  if (!ls) warnNoStorage();
 }
 function saveProgress() {
-  try { localStorage.setItem(SAVE_KEY, JSON.stringify(game.progress)); }
-  catch (e) { /* localStorage may be blocked */ }
+  const ls = _store();
+  const raw = JSON.stringify(game.progress);
+  if (ls) { try { ls.setItem(SAVE_KEY, raw); return; } catch (e) { _memStore = {}; } }
+  _memStore = _memStore || {};
+  _memStore[SAVE_KEY] = raw;
+  warnNoStorage();
 }
 function isUnlocked(idx) {
   if (idx === 0) return true;
+  if (game.unlockAll) return true;
   const prev = LEVELS[idx - 1];
   return !!(game.progress[prev.id] && game.progress[prev.id].completed);
 }
@@ -6019,6 +6060,11 @@ function hideModal(id) { document.getElementById(id).classList.remove("show"); }
 document.getElementById("btn-levels").addEventListener("click", () => { renderLevelGrid(); showModal("modal-levels"); });
 document.getElementById("brand-home").addEventListener("click", () => { renderLevelGrid(); showModal("modal-levels"); });
 document.getElementById("lv-close").addEventListener("click", () => hideModal("modal-levels"));
+document.getElementById("lv-unlock").addEventListener("click", () => {
+  game.unlockAll = !game.unlockAll;
+  toast(game.unlockAll ? "All missions unlocked" : "Mission locking restored");
+  renderLevelGrid();
+});
 
 // ════════════════════════════════════════════════════════════════
 // MODE PICKER
